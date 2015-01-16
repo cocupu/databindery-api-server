@@ -4,9 +4,18 @@ source 'https://rubygems.org'
 gem 'rails', '4.1.8'
 
 gem 'rails-api'
+gem "devise"
+gem "omniauth"
+gem 'devise_token_auth'
+gem 'rack-cors', :require => 'rack/cors'
+
 
 gem 'spring', :group => :development
 
+group :test, :development do
+  gem "rspec-rails"
+  gem "factory_girl_rails"
+end
 
 gem 'sqlite3'
 
