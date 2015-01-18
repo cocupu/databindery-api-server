@@ -1,0 +1,16 @@
+# each environment can have a jetty_path with absolute or relative
+# (to app root) path to a jetty/solr install. This is used
+# by the rake tasks that start up solr automatically for testing
+#
+# If you want to use a port other than 8983, set TEST_JETTY_PORT environment variable
+
+production:
+  url: http://127.0.0.1:8080/solr_cocupu/
+
+development:
+  url: http://127.0.0.1:8983/solr/development
+test: &test
+  jetty_path: 'test_jetty'
+  url: <%= "http://127.0.0.1:#{ENV['TEST_JETTY_PORT'] || 8983}/solr/test" %>
+cucumber:
+  <<: *test

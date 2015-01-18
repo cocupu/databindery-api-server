@@ -1,0 +1,9 @@
+development:
+  access_key_id: AKIAJHUVKB4G2QTCREWA
+  secret_access_key: 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
+test:
+  access_key_id: AKIAJHUVKB4G2QTCREWA
+  secret_access_key: 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
+production:
+  access_key_id: AKIAJHUVKB4G2QTCREWA
+  secret_access_key: 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

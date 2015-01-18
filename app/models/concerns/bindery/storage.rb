@@ -1,0 +1,2 @@
+module Bindery::Storage
+end
