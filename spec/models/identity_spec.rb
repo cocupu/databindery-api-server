@@ -3,6 +3,7 @@ require 'rails_helper'
 describe Identity do
   describe "short_name" do
     it "should be required" do
+      pending
       subject.valid?.should be_falsey
       subject.short_name = "foo"
       subject.valid?.should be_truthy

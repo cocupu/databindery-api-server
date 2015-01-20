@@ -18,7 +18,7 @@ class Identity < ActiveRecord::Base
   end
 
   def to_param
-    short_name
+    id.to_s
   end
 
   ANONYMOUS_VISITOR_CODE = "anonymous"
