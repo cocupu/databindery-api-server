@@ -16,4 +16,4 @@
 # Using secret_token for rails3 compatibility. Change to secret_key_base
 # to avoid deprecation warning.
 # Can be safely removed in a rails3 api-only application.
-DatabinderyApiServer::Application.config.secret_token = '1265c3193fde0421e7cde0b1416425d91a6ce3b4dc09459297e727bacfaf90ae3da61027f4965ec35ccf537b884c3768fce0d2c5ce6a21d5d87edbb9e7f14a01'
+DatabinderyApiServer::Application.config.secret_key_base = '1265c3193fde0421e7cde0b1416425d91a6ce3b4dc09459297e727bacfaf90ae3da61027f4965ec35ccf537b884c3768fce0d2c5ce6a21d5d87edbb9e7f14a01'

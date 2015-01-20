@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Swagger UI</title>
+  <!--<link href='//fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'/>-->
+  <link href='/api-docs/swagger-ui/css/reset.css' media='screen' rel='stylesheet' type='text/css'/>
+  <link href='/api-docs/swagger-ui/css/screen.css' media='screen' rel='stylesheet' type='text/css'/>
+  <link href='/api-docs/swagger-ui/css/reset.css' media='print' rel='stylesheet' type='text/css'/>
+  <link href='/api-docs/swagger-ui/css/screen.css' media='print' rel='stylesheet' type='text/css'/>
+  <script type="text/javascript" src="/api-docs/swagger-ui/lib/shred.bundle.js"></script>
+  <script src='/api-docs/swagger-ui/lib/jquery-1.8.0.min.js' type='text/javascript'></script>
+  <script src='/api-docs/swagger-ui/lib/jquery.slideto.min.js' type='text/javascript'></script>
+  <script src='/api-docs/swagger-ui/lib/jquery.wiggle.min.js' type='text/javascript'></script>
+  <script src='/api-docs/swagger-ui/lib/jquery.ba-bbq.min.js' type='text/javascript'></script>
+  <script src='/api-docs/swagger-ui/lib/handlebars-1.0.0.js' type='text/javascript'></script>
+  <script src='/api-docs/swagger-ui/lib/underscore-min.js' type='text/javascript'></script>
+  <script src='/api-docs/swagger-ui/lib/backbone-min.js' type='text/javascript'></script>
+  <script src='/api-docs/swagger-ui/lib/swagger.js' type='text/javascript'></script>
+  <script src='/api-docs/swagger-ui/lib/swagger-client.js' type='text/javascript'></script>
+  <script src='/api-docs/swagger-ui/swagger-ui.js' type='text/javascript'></script>
+  <script src='/api-docs/swagger-ui/lib/highlight.7.3.pack.js' type='text/javascript'></script>
+
+  <!-- enabling this will enable oauth2 implicit scope support -->
+  <script src='/api-docs/swagger-ui/lib/swagger-oauth.js' type='text/javascript'></script>
+  <script type="text/javascript">
+    $(function () {
+      window.swaggerUi = new SwaggerUi({
+        url: "/api-docs/api-docs.json",
+        dom_id: "swagger-ui-container",
+        supportedSubmitMethods: ['get', 'post', 'put', 'delete'],
+        onComplete: function(swaggerApi, swaggerUi){
+          log("Loaded SwaggerUI");
+          if(typeof initOAuth == "function") {
+            /*
+            initOAuth({
+              clientId: "your-client-id",
+              realm: "your-realms",
+              appName: "your-app-name"
+            });
+            */
+          }
+          $('pre code').each(function(i, e) {
+            hljs.highlightBlock(e)
+          });
+        },
+        onFailure: function(data) {
+          log("Unable to Load SwaggerUI");
+        },
+        docExpansion: "none",
+        sorter : "alpha"
+      });
+
+      var updateAuth = function() {
+        email = $('#input_user')[0].value
+        password = $('#input_pass')[0].value
+        if((email && email.trim() != "") && (password && password.trim() != "")) {
+          authenticateUser(email, password)
+        }
+//        var auth = "Basic " + btoa($('#input_user')[0].value + ":" + $('#input_pass')[0].value);
+//        window.authorizations.add("key", new ApiKeyAuthorization("Authorization", auth, "header"));
+      };
+
+      var authenticateUser = function(email, password) {
+        $.ajax({
+          url: "/api/auth/sign_in.json",
+          data: {'email':email, 'password':password},
+          type: 'POST'
+        }).done(function(data, textStatus, jqXHR){
+          updateTokenAuthHeaders(jqXHR);
+        });
+      };
+
+      var updateTokenAuthHeaders = function(jqXHR) {
+        window.authorizations.add('access-token', new ApiKeyAuthorization('access-token', jqXHR.getResponseHeader('access-token'), "header"));
+        window.authorizations.add('client', new ApiKeyAuthorization("client", jqXHR.getResponseHeader("client"), "header"));
+        window.authorizations.add('uid', new ApiKeyAuthorization("uid", jqXHR.getResponseHeader("uid"), "header"));
+        window.authorizations.add('expiry', new ApiKeyAuthorization("expiry", jqXHR.getResponseHeader("expiry"), "header"));
+        console.log(jqXHR);
+        console.log("Updated headers with access token "+ jqXHR.getResponseHeader('access-token'));
+      };
+
+
+      $('#input_user').change(updateAuth);
+      $('#input_pass').change(updateAuth);
+
+//      function addApiKeyAuthorization() {
+//        var key = $('#input_apiKey')[0].value;
+//        log("key: " + key);
+//        if(key && key.trim() != "") {
+//            log("added key " + key);
+//            window.authorizations.add("api_key", new ApiKeyAuthorization("api_key", key, "query"));
+//        }
+//      }
+//
+//      $('#input_apiKey').change(function() {
+//        addApiKeyAuthorization();
+//      });
+
+      // if you have an apiKey you would like to pre-populate on the page for demonstration purposes...
+      /*
+        var apiKey = "myApiKeyXXXX123456789";
+        $('#input_apiKey').val(apiKey);
+        addApiKeyAuthorization();
+      */
+
+      window.swaggerUi.load();
+  });
+  </script>
+</head>
+
+<body class="swagger-section">
+<div id='header'>
+  <div class="swagger-ui-wrap">
+    <a id="logo" href="http://databindery.com">DataBindery</a>
+    <form id='api_selector'>
+      <input placeholder="email" id="input_user" name="email" type="text" size="10">
+      <input placeholder="password" id="input_pass" type="password" name="password" type="text" size="10">
+      <!--<div class='input'><input placeholder="http://example.com/api" id="input_baseUrl" name="baseUrl" type="text"/></div>-->
+      <!--<div class='input'><input placeholder="api_key" id="input_apiKey" name="apiKey" type="text"/></div>-->
+      <!--<div class='input'><a id="explore" href="#">Explore</a></div>-->
+    </form>
+  </div>
+</div>
+
+<div id="message-bar" class="swagger-ui-wrap">&nbsp;</div>
+<div id="swagger-ui-container" class="swagger-ui-wrap"></div>
+</body>
+</html>

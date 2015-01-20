@@ -4,6 +4,10 @@
 # or operating system, you probably want to add a global ignore instead:
 #   git config --global core.excludesfile ~/.gitignore_global
 
+# Ignore Generate Swagger docs
+public/api-docs/api-docs.json
+public/api-docs/api/
+
 # Ignore bundler config and local copies of js installed by bower
 /.bundle
 vendor/assets/bower_components/

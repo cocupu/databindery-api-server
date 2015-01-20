@@ -22,6 +22,9 @@ gem "rsolr"
 gem "solrizer"
 gem "blacklight"
 
+# API & Documentation
+gem "swagger-docs", "~> 0.1.9"
+
 # Asynchronous Workers
 gem "resque", "=1.26.pre.0"
 # Need the github version of resque-status to avoid bug where mocha was declared as runtime dependency

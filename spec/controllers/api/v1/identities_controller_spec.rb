@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe IdentitiesController do
+describe Api::V1::IdentitiesController do
 
   describe "index" do
     before do
@@ -19,7 +19,7 @@ describe IdentitiesController do
       identity_json = json.select {|i| i["id"] == @identity.id}.first
       identity_json.delete("created_at")
       identity_json.delete("updated_at")
-      identity_json.should == {"id"=>@identity.id, "name"=>@identity.name, "short_name"=>@identity.short_name, "url"=>"/api/identities/#{@identity.id}"}
+      identity_json.should == {"id"=>@identity.id, "name"=>@identity.name, "short_name"=>@identity.short_name, "url"=>api_v1_identity_path(@identity.id)}
     end
     it "should allow searching for identities belonging to email address" do
       get :index, email:@identity.login_credential.email
