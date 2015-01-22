@@ -21,7 +21,7 @@ Swagger::Docs::Config.register_apis({
         # the URL base path to your API
         :base_path => base_path_for_env,
         # if you want to delete all .json files at each generation
-        :clean_directory => false,
+        :clean_directory => true,
         :controller_base_path => "",
         # add custom attributes to api-docs
         :attributes => {
