@@ -15,17 +15,18 @@ end
 Swagger::Docs::Config.register_apis({
     "v1" => {
         # the extension used for the API
-        :api_extension_type => :json,
+        api_extension_type: :json,
         # the output location where your .json files are written to
-        :api_file_path => "public/api-docs/",
+        api_file_path: "public/api-docs/",
         # the URL base path to your API
-        :base_path => base_path_for_env,
+        base_path: base_path_for_env,
         # if you want to delete all .json files at each generation
-        :clean_directory => true,
-        :controller_base_path => "",
+        clean_directory: true,
+        controller_base_path: "",
+        camelize_model_properties: false,
         # add custom attributes to api-docs
-        :attributes => {
-            :info => {
+        attributes: {
+            info: {
                 "title" => "Explore the DataBindery API",
                 "description" => "DataBindery is an API platform for curating data and files.  These docs give you a live connection to the API.  Enter the email and password for your DataBindery account and submit requests from the interactive documentation.",
                 "termsOfServiceUrl" => "http://databindery.com/terms",

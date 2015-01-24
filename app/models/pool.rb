@@ -103,7 +103,7 @@ class Pool < ActiveRecord::Base
   # Serialization
   #
   def to_param
-    short_name
+    id.to_s
   end
 
   def all_fields

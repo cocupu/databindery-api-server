@@ -7,30 +7,32 @@ module Bindery::Node::HasFiles
 
   # Stores file in an S3 bucket named after its Pool's persistent_id
   def attach_file(file_name, file)
-    node = Node.new
-    node.extend FileEntity
-    node.file_name = file_name
-    node.pool= pool
-    node.model= Model.file_entity
+    file_node = Node.new
+    file_node.extend FileEntity
+    file_node.file_name = file_name
+    file_node.pool= pool
+    file_node.model= Model.file_entity
     raise StandardError, "You can't add files to a Pool that hasn't been persisted.  Save the pool first." unless pool.persisted?
-    node.bucket = pool.persistent_id # s3 bucket name
-    node.content = file.read
+    file_node.bucket = pool.persistent_id # s3 bucket name
+    file_node.content = file.read
     if file.respond_to?(:mime_type)
-      node.mime_type = file.mime_type
+      file_node.mime_type = file.mime_type
     end
-    node.save!
-    files << node
+    file_node.content_type # Sets content_type field
+    file_node.save!
+    files << file_node
     update
+    return file_node
   end
 
   # This list is persisted as an array of persistent_ids in associations["files"]
   # It's persisted as an array of ids rather than an association in database because order is relevant and multiple nodes might reference the same file.
   # DO NOT manipulate associations["files"] directly.  Those changes will not be persisted.
   def files
-    if associations['files'].nil?
+    if data['files'].nil?
       @files ||= []
     else
-      @files ||= associations['files'].map{|pid| Node.find_by_persistent_id(pid).extend(FileEntity)}
+      @files ||= data['files'].map{|pid| Node.find_by_persistent_id(pid).extend(FileEntity)}
     end
   end
 
@@ -63,7 +65,7 @@ module Bindery::Node::HasFiles
   # If @files is empty, the associations will be left untouched.
   def update_file_ids
     # Don't set "files" key in associations hash unless there are files to associate.
-    associations['files'] = files.map{|file| file.persistent_id} unless files.empty?
+    data['files'] = files.map{|file| file.persistent_id} unless files.empty?
   end
 
   private :file_ids, :update_file_ids

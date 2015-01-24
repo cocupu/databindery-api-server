@@ -3,6 +3,10 @@ class Field < ActiveRecord::Base
   validates :name, presence: true, if: "code.nil?"
   before_create :initialize_name_and_code
 
+  def to_param
+    id.to_s
+  end
+
   # Include the type in json representation of Fields
   def as_json(options=nil)
     json = super

@@ -18,7 +18,7 @@ describe Bindery::Storage::S3 do
     before do
       @file_entity = FileEntity.build persistent_id:"samplePid"
       @now = Time.now
-      @formatted_now = @now.strftime('%Y%m%dT%H%M%S%Z')
+      @formatted_now = @now.in_time_zone('UTC').strftime('%Y%m%dT%H%M%S%Z')
     end
     it "should generate the desired S3 key for the given File Entity" do
       Time.stub(:now).and_return(@now)

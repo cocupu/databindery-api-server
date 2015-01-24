@@ -15,7 +15,7 @@ module Bindery::Storage::S3
   end
 
   def self.generate_storage_location_id(file_entity)
-    generated_id = file_entity.persistent_id + "_" + Time.now.strftime('%Y%m%dT%H%M%S%Z')
+    generated_id = file_entity.persistent_id + "_" + Time.now.in_time_zone('UTC').strftime('%Y%m%dT%H%M%S%Z')
     if file_entity.file_name
       generated_id = [generated_id, file_entity.file_name].join("_")
     end

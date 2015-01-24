@@ -3,7 +3,19 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :identities, :only=>[:index, :show]
-      resources :pools
+      resources :models
+      resources :fields
+      resources :pools do
+        resources :nodes, :only=>[:create, :update, :show, :index, :destroy] do
+          collection do
+            get 'search'
+            post 'find_or_create'
+            post 'import'
+          end
+          match 'files' => 'nodes#attach_file', :via=>:post
+        end
+        resources :models
+      end
     end
   end
 
