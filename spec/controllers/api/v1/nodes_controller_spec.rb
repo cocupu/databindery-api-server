@@ -236,14 +236,16 @@ describe Api::V1::NodesController do
       api_v1_pool_node_files_path('my_pool', 567).should == "/api/v1/pools/my_pool/nodes/567/files"
     end
     it "should upload files" do
-      post :attach_file, pool_id: pool, identity_id: identity, 
+      uploaded_file = fixture_file_upload('/images/rails.png', 'image/png', true)
+      dummy_file_node = FactoryGirl.create(:node, model:model, pool:pool)
+      expect(@node).to receive(:attach_file).with("rails.png",uploaded_file).and_return(dummy_file_node)
+      expect(Node).to receive(:find_by_persistent_id).with(@node.persistent_id).and_return(@node)
+      post :attach_file, pool_id: pool, identity_id: identity,
         node_id: @node.persistent_id, file_name: "rails.png",
-        file: fixture_file_upload('/images/rails.png', 'image/png', true)
+        file: uploaded_file
       node = Node.latest_version(@node.persistent_id)
       expect(response).to be_success
-      file_node = Node.latest_version(node.files.first.persistent_id)
-      expect(file_node.file_name).to eq 'rails.png'
-      expect(response.body).to eq(expected_json_for_node(file_node))
+      expect(response.body).to eq(expected_json_for_node(dummy_file_node))
     end
   end
   

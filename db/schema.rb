@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150117112810) do
+ActiveRecord::Schema.define(version: 20150124110436) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -196,6 +196,16 @@ ActiveRecord::Schema.define(version: 20150117112810) do
   end
 
   add_index "search_filters", ["filterable_id", "filterable_type"], name: "index_search_filters_on_filterable_id_and_filterable_type", using: :btree
+
+  create_table "searches", force: true do |t|
+    t.text     "query_params"
+    t.integer  "login_credential_id"
+    t.datetime "created_at",          null: false
+    t.datetime "updated_at",          null: false
+    t.string   "user_type"
+  end
+
+  add_index "searches", ["login_credential_id"], name: "index_searches_on_login_credential_id", using: :btree
 
   create_table "spawn_jobs", force: true do |t|
     t.text     "reification_job_ids"

@@ -10,11 +10,16 @@ module Api
           success: {
               code: 200,
               message: "Request Succeeded",
-              description: I18n.t('unauthorized.success')
+              description: I18n.t('success.default')
           },
           deleted: {
               code: 200,
               message: I18n.t('deleted.default')
+          },
+          accepted: {
+              code: 202,
+              message: "Accepted",
+              description: I18n.t('accepted.default')
           },
           bad_request: {
               code: 400,

@@ -20,6 +20,8 @@
 # available at http://guides.rubyonrails.org/i18n.html.
 
 en:
+  accepted:
+    default: "Your request has been accepted for processing, but processing is not complete. See job for more info."
   unauthorized:
     default: "You must be logged in to do that!"
   forbidden:

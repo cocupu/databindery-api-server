@@ -10,9 +10,9 @@
       @expected_response_body = expectation_options.nil? ? default_response_body : default_response_body.merge(expectation_options)
       json = JSON.parse(response.body)
       expect(response.code).to eq(@expected_response_body[:code].to_s)
-      expect(json['code']).to eq(@expected_response_body[:code])
-      expect(json['message']).to eq(@expected_response_body[:message])
-      expect(json['description']).to eq(@expected_response_body[:description])
+      @expected_response_body.each_pair do |key,value|
+        expect(json[key.to_s]).to eq(value)
+      end
     end
 
     failure_message do |actual|

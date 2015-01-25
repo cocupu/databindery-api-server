@@ -139,7 +139,7 @@ describe Api::V1::ModelsController do
       end
       it "should render the form when validation fails" do
         post :create, :model=>{:foo=>'bar'}, :pool_id=>pool, identity_id: identity
-        expect(response).to respond_bad_request(params:{})
+        expect(response).to respond_bad_request(errors:["Name can't be blank"])
       end
       it "should be successful and return the model as json" do
         post :create, :model=>{:name=>'Turkey'}, :pool_id=>pool, identity_id: identity
