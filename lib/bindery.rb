@@ -1,6 +1,7 @@
 module Bindery
   extend ActiveSupport::Autoload
   autoload :SeedDataImporter
+  autoload :PoolExporter
 
   def self.solr
     @solr ||=  RSolr.connect(solr_config)

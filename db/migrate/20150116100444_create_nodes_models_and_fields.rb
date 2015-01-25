@@ -2,8 +2,7 @@ class CreateNodesModelsAndFields < ActiveRecord::Migration
   def change
     create_table "models", force: true do |t|
       t.string   "name"
-      # t.text     "fields"
-      # t.text     "associations"
+      t.string   "uri"
       t.datetime "created_at",                         null: false
       t.datetime "updated_at",                         null: false
       t.string   "label"
@@ -20,7 +19,6 @@ class CreateNodesModelsAndFields < ActiveRecord::Migration
 
     create_table "nodes", force: true do |t|
       t.text     "data"
-      # t.text     "associations"
       t.string   "persistent_id"
       t.string   "parent_id"
       t.integer  "pool_id"

@@ -2,6 +2,7 @@ class Field < ActiveRecord::Base
   has_and_belongs_to_many :models
   validates :name, presence: true, if: "code.nil?"
   before_create :initialize_name_and_code
+  # after_create  :initialize_uri
 
   def to_param
     id.to_s
@@ -35,6 +36,13 @@ class Field < ActiveRecord::Base
     self.code ||= self.name.downcase
     self.name ||= self.code.gsub("_", " ").capitalize
   end
+
+  # def initialize_uri
+  #   if self.uri.nil?
+  #     self.uri  ||= "http://api.databindery.com/api/v1/pools/#{models.first.pool.to_param}/fields/#{self.to_param}"
+  #     self.save
+  #   end
+  # end
 end
 class TextField < Field;end
 class TextArea < Field;end

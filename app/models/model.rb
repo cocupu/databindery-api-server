@@ -141,6 +141,10 @@ class Model < ActiveRecord::Base
     label_field_id.to_s
   end
 
+  def to_uri
+    "http://api.databindery.com/api/v1/pools/#{self.pool_id}/models/#{self.id}"
+  end
+
   # Return the Model's array of fields and associations as they are ordered in the edit view
   def ordered_fields_and_associations
     self.fields.concat(self.association_fields)
