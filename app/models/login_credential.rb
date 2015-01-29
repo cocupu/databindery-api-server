@@ -1,7 +1,7 @@
 class LoginCredential < ActiveRecord::Base
   include DeviseTokenAuth::Concerns::User
 
-  has_many :identities, :dependent => :destroy
+  has_many :identities#, :dependent => :destroy
 
   accepts_nested_attributes_for :identities
 

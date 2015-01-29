@@ -1,6 +1,6 @@
 class Api::V1::PoolDataController < ApplicationController
   include Api::V1::SwaggerDefs::Data
-  load_and_authorize_resource :identity, :find_by => :short_name
+  # load_and_authorize_resource :identity, :find_by => :short_name
   before_filter :load_pool
   load_and_authorize_resource :pool
   load_and_authorize_resource instance_name: :node, class: Node, find_by: :persistent_id, only: [:show]

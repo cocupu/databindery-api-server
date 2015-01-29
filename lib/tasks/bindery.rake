@@ -32,8 +32,8 @@ namespace :bindery do
   desc "Import seed data"
   task :seed  => :environment do
     # Bindery::SeedDataImporter.instance.import_data("seeds.json", Model.file_entity, Bindery::SeedDataImporter.instance.seed_pool)
-    pool = Pool.find_or_create_by(short_name:"seeds2", owner: Bindery::SeedDataImporter.instance.seed_identity)
-    Bindery::SeedDataImporter.instance.import_data("seeds.json", Model.file_entity, pool)
+    # pool = Pool.find_or_create_by(short_name:"seeds2", owner: Bindery::SeedDataImporter.instance.seed_identity)
+    Bindery::SeedDataImporter.instance.import_data("seeds/pullahari_rdi_images", Bindery::SeedDataImporter.instance.seed_pool)
   end
 
   desc "Harvest seed data from S3 (slow)"

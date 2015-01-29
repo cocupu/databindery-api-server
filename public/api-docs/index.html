@@ -80,8 +80,12 @@
       };
 
 
-      $('#input_user').change(updateAuth);
-      $('#input_pass').change(updateAuth);
+//      $('#input_user').change(updateAuth);
+//      $('#input_pass').change(updateAuth);
+      $('#refresh_auth').click(function (event) {
+        event.preventDefault();
+        updateAuth();
+      });
 
 //      function addApiKeyAuthorization() {
 //        var key = $('#input_apiKey')[0].value;
@@ -117,7 +121,7 @@
       <input placeholder="password" id="input_pass" type="password" name="password" type="text" size="10">
       <!--<div class='input'><input placeholder="http://example.com/api" id="input_baseUrl" name="baseUrl" type="text"/></div>-->
       <!--<div class='input'><input placeholder="api_key" id="input_apiKey" name="apiKey" type="text"/></div>-->
-      <!--<div class='input'><a id="explore" href="#">Explore</a></div>-->
+      <button class='submit' id="refresh_auth">Refresh Auth Token</button>
     </form>
   </div>
 </div>
