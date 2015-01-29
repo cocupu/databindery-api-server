@@ -1,0 +1,1 @@
+module Bindery::Persistence; end

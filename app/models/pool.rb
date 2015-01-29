@@ -130,7 +130,7 @@ class Pool < ActiveRecord::Base
   end
 
   def file_store_type
-    Bindery::Storage::S3
+    Bindery::Persistence::S3
   end
 
   def default_file_store

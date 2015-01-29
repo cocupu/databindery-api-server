@@ -51,7 +51,7 @@ describe FileEntity do
       @pool = FactoryGirl.create :pool, :owner=>@identity
     end
     it "should generate an UNSAVED FileEntity with persistent_id and storage_location_id" do
-      Bindery::Storage::S3.should_receive(:generate_storage_location_id).and_return("generated storage id")
+      Bindery::Persistence::S3.should_receive(:generate_storage_location_id).and_return("generated storage id")
       file_entity = FileEntity.placeholder_for_upload(@pool, {})
       file_entity.should be_new_record
       file_entity.persistent_id.should_not be_nil

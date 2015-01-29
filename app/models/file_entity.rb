@@ -25,7 +25,7 @@ module FileEntity
     file_entity.file_entity_type = "S3"
     file_entity.content_type
     if file_entity.storage_location_id.include?(file_entity.bucket)
-      file_entity.storage_location_id = Bindery::Storage::S3.key_from_filepath(file_entity.storage_location_id,bucket:file_entity.bucket)
+      file_entity.storage_location_id = Bindery::Persistence::S3.key_from_filepath(file_entity.storage_location_id,bucket:file_entity.bucket)
     end
     # If a binding URL was not provided, generate it based on node info before saving.
     file_entity.binding = pool.file_store_type.binding_url_from_node_info(file_entity) unless file_entity.binding
