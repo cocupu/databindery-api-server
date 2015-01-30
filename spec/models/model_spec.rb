@@ -89,7 +89,7 @@ describe Model do
   describe "map_field_codes_to_id_strings" do
     it "should return a hash that maps field codes to id strings" do
       expected = {}
-      field_list.each {|f| expected[f.code] = f.id.to_s}
+      field_list.each {|f| expected[f.code] = f.to_param}
       expect( model_with_fields.map_field_codes_to_id_strings ).to eq(expected)
     end
   end
@@ -97,7 +97,7 @@ describe Model do
   let(:data_with_field_codes) { {"full_name"=>"Bessie Smith", "last_name"=>"Smith", "passion"=>"Jazz", "profession"=>"Singer"} }
   describe "convert_data_field_codes_to_id_strings" do
     it "should replace field codes with id strings where possible" do
-      expect( model_with_fields.convert_data_field_codes_to_id_strings(data_with_field_codes) ).to eq( {full_name_field.id.to_s=>"Bessie Smith", last_name_field.id.to_s=>"Smith", "passion"=>"Jazz", "profession"=>"Singer"} )
+      expect( model_with_fields.convert_data_field_codes_to_id_strings(data_with_field_codes) ).to eq( {full_name_field.to_param=>"Bessie Smith", last_name_field.to_param=>"Smith", "passion"=>"Jazz", "profession"=>"Singer"} )
     end
   end
 

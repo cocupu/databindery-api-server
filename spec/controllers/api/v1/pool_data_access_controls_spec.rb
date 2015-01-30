@@ -15,13 +15,13 @@ describe Api::V1::PoolDataController do
     
   before do
     pool.audience_categories.build.save
-    @node_kittens = FactoryGirl.create(:node, pool:pool, model:model1, data:{full_name_field.id.to_s=>"Kittens", location_field.id.to_s=>"Albuquerque"})
-    @node_puppies = FactoryGirl.create(:node, pool:pool, model:model1, data:{full_name_field.id.to_s=>"Puppies", location_field.id.to_s=>"Albuquerque"})
-    @node_pandas = FactoryGirl.create(:node, pool:pool, model:model1, data:{full_name_field.id.to_s=>"Pandas", location_field.id.to_s=>"Yunan"})
-    @node_ordinary1 = FactoryGirl.create(:node, pool:pool, model:model2, data:{access_level_field.id.to_s=>"ordinary", subject_field.id.to_s=>"Ordinary 1"})
-    @node_ordinary2 = FactoryGirl.create(:node, pool:pool, model:model2, data:{access_level_field.id.to_s=>"ordinary", subject_field.id.to_s=>"Ordinary 2"})
-    @node_special = FactoryGirl.create(:node, pool:pool, model:model2, data:{access_level_field.id.to_s=>"special", subject_field.id.to_s=>"Special"})
-    @node_extra_special = FactoryGirl.create(:node, pool:pool, model:model2, data:{access_level_field.id.to_s=>"extra_special", subject_field.id.to_s=>"Extra Special"})
+    @node_kittens = FactoryGirl.create(:node, pool:pool, model:model1, data:{full_name_field.to_param=>"Kittens", location_field.to_param=>"Albuquerque"})
+    @node_puppies = FactoryGirl.create(:node, pool:pool, model:model1, data:{full_name_field.to_param=>"Puppies", location_field.to_param=>"Albuquerque"})
+    @node_pandas = FactoryGirl.create(:node, pool:pool, model:model1, data:{full_name_field.to_param=>"Pandas", location_field.to_param=>"Yunan"})
+    @node_ordinary1 = FactoryGirl.create(:node, pool:pool, model:model2, data:{access_level_field.to_param=>"ordinary", subject_field.to_param=>"Ordinary 1"})
+    @node_ordinary2 = FactoryGirl.create(:node, pool:pool, model:model2, data:{access_level_field.to_param=>"ordinary", subject_field.to_param=>"Ordinary 2"})
+    @node_special = FactoryGirl.create(:node, pool:pool, model:model2, data:{access_level_field.to_param=>"special", subject_field.to_param=>"Special"})
+    @node_extra_special = FactoryGirl.create(:node, pool:pool, model:model2, data:{access_level_field.to_param=>"extra_special", subject_field.to_param=>"Extra Special"})
   end
   before(:each) do
     @identity = FactoryGirl.create :identity

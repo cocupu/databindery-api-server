@@ -96,7 +96,7 @@ module Bindery::Node::Indexing
     doc = {}
     # update_file_ids
     model.association_fields.each do |f|
-      instances = find_association(f.id.to_s)
+      instances = find_association(f.to_param)
       next unless instances
       doc["bindery__associations_sim"] ||= []
       instances.each do |instance|
@@ -121,7 +121,7 @@ module Bindery::Node::Indexing
     doc = {}
     return doc if data.nil?
     model.fields.each do |f|
-      val = f.sanitize(data[f.id.to_s])
+      val = f.sanitize(data[f.to_param])
       if opts[:multivalue]
         f['multivalue'] = true
       end

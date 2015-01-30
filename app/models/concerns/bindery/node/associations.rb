@@ -12,8 +12,8 @@ module Bindery::Node::Associations
     update_file_ids
     model.association_fields.each do |a|
       output[a.name] = []
-      if data[a.id.to_s] && data[a.id.to_s].kind_of?(Array)
-        data[a.id.to_s].each do |id|
+      if data[a.to_param] && data[a.to_param].kind_of?(Array)
+        data[a.to_param].each do |id|
           node = Node.latest_version(id)
           output[a.name] <<  node.association_display if node
         end

@@ -4,7 +4,7 @@ describe Node do
   let(:full_name_field) { FactoryGirl.create :full_name_field }
   let(:location_field) { FactoryGirl.create :location_field }
   let(:model) { FactoryGirl.create(:model, fields:[full_name_field,location_field])}
-  subject { Node.new(model:model, data:{ full_name_field.id.to_s => "My Value" })}
+  subject { Node.new(model:model, data:{ full_name_field.to_param => "My Value" })}
   describe "field_value" do
     it "should get field values by field id" do
       expect( subject.field_value(full_name_field.id) ).to eq("My Value")
@@ -30,14 +30,14 @@ describe Node do
   let(:data_with_field_codes) { {"full_name"=>"Bessie Smith", "location"=>"New Orleans", "passion"=>"Jazz", "profession"=>"Singer"} }
   describe "convert_data_field_codes_to_id_strings" do
     it "should replace field codes with id strings where possible" do
-      expect( subject.convert_data_field_codes_to_id_strings(data_with_field_codes) ).to eq( {full_name_field.id.to_s=>"Bessie Smith", location_field.id.to_s=>"New Orleans", "passion"=>"Jazz", "profession"=>"Singer"} )
+      expect( subject.convert_data_field_codes_to_id_strings(data_with_field_codes) ).to eq( {full_name_field.to_param=>"Bessie Smith", location_field.to_param=>"New Orleans", "passion"=>"Jazz", "profession"=>"Singer"} )
     end
   end
   describe "convert_data_field_codes_to_id_strings!" do
     it "should replace field codes with id strings where possible" do
       subject.data =  data_with_field_codes
       subject.convert_data_field_codes_to_id_strings!
-      expect( subject.data ).to eq( {full_name_field.id.to_s=>"Bessie Smith", location_field.id.to_s=>"New Orleans", "passion"=>"Jazz", "profession"=>"Singer"} )
+      expect( subject.data ).to eq( {full_name_field.to_param=>"Bessie Smith", location_field.to_param=>"New Orleans", "passion"=>"Jazz", "profession"=>"Singer"} )
     end
   end
 end

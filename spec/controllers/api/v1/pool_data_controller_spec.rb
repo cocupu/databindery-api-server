@@ -98,7 +98,7 @@ describe Api::V1::PoolDataController do
         [@node1, @node2].each {|n| pids.should_not include(n.persistent_id)}
       end
       it "should allow faceted queries by field id" do
-        get :index, :pool_id=>other_pool, :format=>:json, "nodesOnly"=>"true", "facet_fields" => {make_field.id.to_s => "barf"}
+        get :index, :pool_id=>other_pool, :format=>:json, "nodesOnly"=>"true", "facet_fields" => {make_field.to_param => "barf"}
         expect(response).to  be_successful
         json = JSON.parse(response.body)
         pids = json.map {|doc| doc["id"]}
@@ -106,14 +106,14 @@ describe Api::V1::PoolDataController do
         [@node1, @node2].each {|n| pids.should_not include(n.persistent_id)}
       end
       it "should allow sorting by field id" do
-        get :index, :pool_id=>other_pool, :format=>:json, "nodesOnly"=>"true", "sort_fields" => [year_field.id.to_s => "desc"]
+        get :index, :pool_id=>other_pool, :format=>:json, "nodesOnly"=>"true", "sort_fields" => [year_field.to_param => "desc"]
         expect(response).to  be_successful
         json = JSON.parse(response.body)
         pids = json.map {|doc| doc["id"]}
         expect(pids).to eq [@node3.persistent_id, @node4.persistent_id, @node2.persistent_id, @node1.persistent_id]
       end
       it "should allow sorting by field id from json array" do
-        get :index, :pool_id=>other_pool, :format=>:json, "nodesOnly"=>"true", "sort_fields" => "[{\"#{name_field.id.to_s}\":\"asc\"},{\"#{year_field.id.to_s}\":\"desc\"}]"
+        get :index, :pool_id=>other_pool, :format=>:json, "nodesOnly"=>"true", "sort_fields" => "[{\"#{name_field.to_param}\":\"asc\"},{\"#{year_field.to_param}\":\"desc\"}]"
         expect(response).to  be_successful
         json = JSON.parse(response.body)
         pids = json.map {|doc| doc["id"]}

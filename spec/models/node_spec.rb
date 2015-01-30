@@ -56,18 +56,18 @@ describe Node do
                                            fields: [full_name_field],
                                            owner: identity) }
     let(:contributing_authors_association) { OrderedListAssociation.create(:name=>'Contributing Authors', :code=>'contributing_authors', :references=>author_model.id) }
-    let(:author1) { FactoryGirl.create(:node, model: author_model, pool: pool, data: {full_name_field.id.to_s => 'Agatha Christie'}) }
-    let(:author2) { FactoryGirl.create(:node, model: author_model, pool: pool, data: {full_name_field.id.to_s => 'Raymond Chandler'}) }
+    let(:author1) { FactoryGirl.create(:node, model: author_model, pool: pool, data: {full_name_field.to_param => 'Agatha Christie'}) }
+    let(:author2) { FactoryGirl.create(:node, model: author_model, pool: pool, data: {full_name_field.to_param => 'Raymond Chandler'}) }
 
     let(:publisher_model) {FactoryGirl.create(:model, name: 'Publisher', label_field: full_name_field,
                                               fields: [full_name_field],
                                               owner: identity)}
-    let(:publisher) { FactoryGirl.create(:node, model: publisher_model, pool: pool, data: {full_name_field.id.to_s => 'Simon & Schuster Ltd.'}) }
+    let(:publisher) { FactoryGirl.create(:node, model: publisher_model, pool: pool, data: {full_name_field.to_param => 'Simon & Schuster Ltd.'}) }
     let(:file) { FactoryGirl.create(:node, model: Model.file_entity, pool: pool, data: {}) }
 
     before do
       subject.model = FactoryGirl.create(:model, name: 'Book', owner: identity, association_fields: [contributing_authors_association])
-      subject.data[contributing_authors_association.id.to_s] = [author1.persistent_id, author2.persistent_id]
+      subject.data[contributing_authors_association.to_param] = [author1.persistent_id, author2.persistent_id]
       subject.data['undefined'] = [publisher.persistent_id]
       subject.files << file
     end
@@ -130,7 +130,7 @@ describe Node do
   describe "with data" do
     before do
       subject.pool = pool
-      subject.data = {'f1'=>'good', first_name_field.id.to_s => 'Heathcliff', last_name_field.id.to_s => 'Huxtable', title_field.id.to_s=>'Dr.'}
+      subject.data = {'f1'=>'good', first_name_field.to_param => 'Heathcliff', last_name_field.to_param => 'Huxtable', title_field.to_param=>'Dr.'}
     end
     it "should read title from field designated by model.label" do
       subject.title.should == 'Huxtable'

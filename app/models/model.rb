@@ -109,7 +109,7 @@ class Model < ActiveRecord::Base
     else
       @field_codes_and_id_strings = {}
       fields.each do |field|
-        @field_codes_and_id_strings[field.code] = field.id.to_s
+        @field_codes_and_id_strings[field.code] = field.to_param
       end
       return @field_codes_and_id_strings
     end

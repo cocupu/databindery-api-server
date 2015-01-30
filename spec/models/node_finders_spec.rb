@@ -67,7 +67,7 @@ describe Node do
       subject.model = FactoryGirl.create(:model, name: 'Book', label_field: title_field, owner: identity,
                                          fields:[title_field],
                                          association_fields: [@contributing_authors_association])
-      subject.data = {'book_title'=>'How to write mysteries', @contributing_authors_association.id.to_s => [@author1.persistent_id, @author2.persistent_id]}
+      subject.data = {'book_title'=>'How to write mysteries', @contributing_authors_association.to_param => [@author1.persistent_id, @author2.persistent_id]}
       subject.pool = pool
       subject.save!
     end

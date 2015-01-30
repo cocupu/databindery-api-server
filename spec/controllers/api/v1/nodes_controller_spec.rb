@@ -48,8 +48,8 @@ describe Api::V1::NodesController do
 
   describe "search" do
     before do
-      @node1 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.id.to_s =>'Justin', last_name_field.id.to_s=>'Coyne', title_field.id.to_s=>'Mr.'})
-      @node2 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.id.to_s=>'Matt', last_name_field.id.to_s=>'Zumwalt', title_field.id.to_s=>'Mr.'})
+      @node1 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.to_param =>'Justin', last_name_field.to_param=>'Coyne', title_field.to_param=>'Mr.'})
+      @node2 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.to_param=>'Matt', last_name_field.to_param=>'Zumwalt', title_field.to_param=>'Mr.'})
       @different_pool_node = FactoryGirl.create(:node, model: model )
       @different_model_node = FactoryGirl.create(:node, pool: pool)
       sign_in identity.login_credential
@@ -112,35 +112,35 @@ describe Api::V1::NodesController do
   
   describe "find_or_create" do
     before do
-      @node1 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.id.to_s=>'Justin', last_name_field.id.to_s=>'Coyne', title_field.id.to_s=>'Mr.'})
-      @node2 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.id.to_s=>'Matt', last_name_field.id.to_s=>'Zumwalt', title_field.id.to_s=>'Mr.'})
-      @node3 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.id.to_s=>'Justin', last_name_field.id.to_s=>'Ball', title_field.id.to_s=>'Mr.'})
+      @node1 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.to_param=>'Justin', last_name_field.to_param=>'Coyne', title_field.to_param=>'Mr.'})
+      @node2 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.to_param=>'Matt', last_name_field.to_param=>'Zumwalt', title_field.to_param=>'Mr.'})
+      @node3 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.to_param=>'Justin', last_name_field.to_param=>'Ball', title_field.to_param=>'Mr.'})
       sign_in identity.login_credential
     end
     it "should not be successful using a pool I can't edit" do       
-      post :find_or_create, :node => {:model_id=>model, :data=>{first_name_field.id.to_s =>"Justin", last_name_field.id.to_s => "Coyne"}}, pool_id: not_my_pool, identity_id: identity.short_name
+      post :find_or_create, :node => {:model_id=>model, :data=>{first_name_field.to_param =>"Justin", last_name_field.to_param => "Coyne"}}, pool_id: not_my_pool, identity_id: identity.short_name
       expect(response).to respond_forbidden
       expect(assigns[:node]).to be_nil
     end
     it "should return existing node node if one already fits the fields & values specified" do
       previous_number_of_nodes = Node.count
-      post :find_or_create, :node => {:model_id=>model, :data=>{first_name_field.id.to_s =>"Justin", last_name_field.id.to_s => "Coyne"}}, pool_id: pool, identity_id: identity.short_name
+      post :find_or_create, :node => {:model_id=>model, :data=>{first_name_field.to_param =>"Justin", last_name_field.to_param => "Coyne"}}, pool_id: pool, identity_id: identity.short_name
       Node.count.should == previous_number_of_nodes
       assigns[:node].data.should == @node1.data
       assigns[:node].model.should == model
     end
     it "should create a new node if none fits the fields & values specified" do
       previous_number_of_nodes = Node.count
-      post :find_or_create, :node => {:model_id=>model, :data=>{first_name_field.id.to_s =>"Randy", last_name_field.id.to_s => "Reckless"}}, pool_id: pool, identity_id: identity.short_name
+      post :find_or_create, :node => {:model_id=>model, :data=>{first_name_field.to_param =>"Randy", last_name_field.to_param => "Reckless"}}, pool_id: pool, identity_id: identity.short_name
       Node.count.should == previous_number_of_nodes + 1
-      assigns[:node].data.should == {first_name_field.id.to_s=>"Randy", last_name_field.id.to_s=>"Reckless"}
+      assigns[:node].data.should == {first_name_field.to_param=>"Randy", last_name_field.to_param=>"Reckless"}
       assigns[:node].model.should == model
     end
     it "should return json" do 
-      post :find_or_create, :node => {:model_id=>model, :data=>{first_name_field.id.to_s =>"Justin", last_name_field.id.to_s=>"Ball", title_field.id.to_s=>"Mr."}}, pool_id: pool, identity_id: identity, :format=>:json
+      post :find_or_create, :node => {:model_id=>model, :data=>{first_name_field.to_param =>"Justin", last_name_field.to_param=>"Ball", title_field.to_param=>"Mr."}}, pool_id: pool, identity_id: identity, :format=>:json
       expect(response).to be_success
       # JSON.parse(response.body).keys.should include('persistent_id', 'model_id', 'url', 'pool', 'identity', 'associations', 'binding')
-      model.nodes.first.data.should == {first_name_field.id.to_s=>"Justin", last_name_field.id.to_s=>"Ball", title_field.id.to_s=>"Mr."}
+      model.nodes.first.data.should == {first_name_field.to_param=>"Justin", last_name_field.to_param=>"Ball", title_field.to_param=>"Mr."}
       expect( response.body ).to eq( expected_json_for_node(model.nodes.first) )
     end
   end
@@ -165,10 +165,10 @@ describe Api::V1::NodesController do
       assigns[:node].modified_by.should == identity
     end
     it "should return json" do 
-      post :create, :node=>{:data=> {first_name_field.id.to_s => 'New val'},  :model_id=>model}, pool_id: pool, identity_id: identity, :format=>:json
+      post :create, :node=>{:data=> {first_name_field.to_param => 'New val'},  :model_id=>model}, pool_id: pool, identity_id: identity, :format=>:json
       expect(response).to be_success
       model.nodes.count.should == 1
-      model.nodes.first.data.should == {first_name_field.id.to_s => 'New val'}
+      model.nodes.first.data.should == {first_name_field.to_param => 'New val'}
       expect( response.body ).to eq( expected_json_for_node(model.nodes.first) )
     end
   end
@@ -182,29 +182,29 @@ describe Api::V1::NodesController do
       sign_in identity.login_credential
     end
     it "should load the node and the models" do
-      put :update, :id => @node1.persistent_id, :node=>{data:{ first_name_field.id.to_s => 'Updated val' }}, pool_id: pool, identity_id: identity
+      put :update, :id => @node1.persistent_id, :node=>{data:{ first_name_field.to_param => 'Updated val' }}, pool_id: pool, identity_id: identity
       expect(response).to be_success
       new_version = Node.latest_version(@node1.persistent_id)
-      new_version.data[first_name_field.id.to_s].should == "Updated val"
+      new_version.data[first_name_field.to_param].should == "Updated val"
     end
     it "should not load node we don't have access to" do
       put :update, :id => @different_pool_node.persistent_id, :node=>{:data=>{ }}, pool_id: pool, identity_id: identity
       expect(response).to respond_forbidden
     end
     it "should set modified_by on the node version it creates" do
-      put :update, :id => @node1.persistent_id, :node=>{:data=>{ first_name_field.id.to_s => 'Updated val' }}, pool_id: pool, identity_id: identity
+      put :update, :id => @node1.persistent_id, :node=>{:data=>{ first_name_field.to_param => 'Updated val' }}, pool_id: pool, identity_id: identity
       assigns[:node].modified_by.should == identity
     end
     it "should accept json without fields wrapped in a :node hash" do
-      put :update, :id => @node1.persistent_id, :format=>'json', pool_id: pool, identity_id: identity, :data=>{ first_name_field.id.to_s => 'Updated val' }
+      put :update, :id => @node1.persistent_id, :format=>'json', pool_id: pool, identity_id: identity, :data=>{ first_name_field.to_param => 'Updated val' }
       new_version = Node.latest_version(@node1.persistent_id)
-      expect(new_version.data[first_name_field.id.to_s]).to eq "Updated val"
+      expect(new_version.data[first_name_field.to_param]).to eq "Updated val"
       expect( response.body ).to eq( expected_json_for_node(new_version) )
     end
     it "should return the updated node as json" do
-      put :update, :id => @node1.persistent_id, :node=>{:data=>{ first_name_field.id.to_s => 'Updated val' }}, :format=>'json', pool_id: pool, identity_id: identity
+      put :update, :id => @node1.persistent_id, :node=>{:data=>{ first_name_field.to_param => 'Updated val' }}, :format=>'json', pool_id: pool, identity_id: identity
       new_version = Node.latest_version(@node1.persistent_id)
-      expect(new_version.data[first_name_field.id.to_s]).to eq "Updated val"
+      expect(new_version.data[first_name_field.to_param]).to eq "Updated val"
       expect( response.body ).to eq( expected_json_for_node(new_version) )
     end
     
@@ -215,8 +215,8 @@ describe Api::V1::NodesController do
       sign_in identity.login_credential
     end
     it "should import nodes from an array of data records" do
-      r1 = { first_name_field.id.to_s => 'A val' }
-      r2 = { first_name_field.id.to_s => 'Another val' }
+      r1 = { first_name_field.to_param => 'A val' }
+      r2 = { first_name_field.to_param => 'Another val' }
       nodes_before = Node.count
       post :import, :data=>[r1, r2], :model_id=>model, pool_id: pool, identity_id: identity.short_name
       expect(Node.count).to eq(nodes_before + 2)

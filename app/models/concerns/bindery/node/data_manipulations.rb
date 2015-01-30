@@ -39,7 +39,7 @@ module Bindery::Node::DataManipulations
       return model.map_field_codes_to_id_strings[field_identifier]
     elsif options[:find_by]
       field = model.fields.where(options[:find_by] => field_identifier).select(:id).first
-      return field.id.to_s unless field.nil?
+      return field.to_param unless field.nil?
     else
       return field_identifier.to_s
     end

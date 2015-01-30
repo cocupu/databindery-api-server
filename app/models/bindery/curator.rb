@@ -60,7 +60,7 @@ module Bindery
         source_nodes_to_process = source_nodes.select {|sn| sn.data[source_field_id] == value_to_spawn}
         # puts "...Found #{source_nodes_to_process.count} nodes to process"
         source_nodes_to_process.each do |sn|
-          sn.data[source_model_association.id.to_s] = [destination_node.persistent_id]
+          sn.data[source_model_association.to_param] = [destination_node.persistent_id]
           if opts[:delete_source_value] == true
             sn.data.delete(source_field_id)
           end

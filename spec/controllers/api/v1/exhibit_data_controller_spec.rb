@@ -31,15 +31,15 @@ describe Api::V1::ExhibitDataController do
     Bindery.solr.delete_by_id raw_results["response"]["docs"].map{ |d| d["id"]}
     Bindery.solr.commit
 
-    @instance = Node.new(data: {f1.id.to_s => 'bazaar'})
+    @instance = Node.new(data: {f1.to_param => 'bazaar'})
     @instance.model = @model1
     @instance.pool = @exhibit.pool 
     @instance.save!
 
-    @instance.data[f2.id.to_s] = 'Bizarre'
+    @instance.data[f2.to_param] = 'Bizarre'
     @instance.save! #Create a new version of this, only one version should show in search results.
 
-    @instance2 = Node.new(data: {f1.id.to_s => 'bazaar'})
+    @instance2 = Node.new(data: {f1.to_param => 'bazaar'})
     @instance2.model = @model1
     @instance2.pool = FactoryGirl.create :pool
     @instance2.save!
