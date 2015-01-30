@@ -1,6 +1,7 @@
 class Model < ActiveRecord::Base
   FILE_ENTITY_CODE = 'FILE'
   include ActiveModel::ForbiddenAttributesProtection
+  include Bindery::Persistence::ElasticSearch::Model
 
   has_many :node
   belongs_to :label_field, class_name:Field

@@ -3,6 +3,9 @@ ENV["RAILS_ENV"] ||= 'test'
 require 'spec_helper'
 require File.expand_path("../../config/environment", __FILE__)
 require 'rspec/rails'
+# require 'sidekiq/testing'
+
+
 # Add additional requires below this line. Rails is not loaded until this point!
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
@@ -52,8 +55,38 @@ RSpec.configure do |config|
   # The different available types are documented in the features, such as in
   # https://relishapp.com/rspec/rspec-rails/docs
   config.infer_spec_type_from_file_location!
+
+  config.before(:each) do | example |
+    # Clears out the jobs for tests using the fake testing
+    # Sidekiq::Worker.clear_all
+    #
+    # if example.metadata[:sidekiq] == :fake
+    #   Sidekiq::Testing.fake!
+    # elsif example.metadata[:sidekiq] == :inline
+    #   Sidekiq::Testing.inline!
+    # elsif example.metadata[:type] == :feature
+    #   Sidekiq::Testing.inline!
+    # else
+    #   Sidekiq::Testing.fake!
+    # end
+
+    if example.metadata[:elasticsearch] == true
+      # Do nothing (don't stub)
+    else
+      stub_elasticsearch_adapters
+    end
+
+  end
+
 end
 
 def sign_in(login_credential)
   allow(controller).to receive(:current_login_credential).and_return login_credential
+end
+
+def stub_elasticsearch_adapters
+  null_object = double('null object').as_null_object
+  [Bindery::Persistence::ElasticSearch::Model::Adapter, Bindery::Persistence::ElasticSearch::Pool::Adapter].each do |adapter_class|
+    allow(adapter_class).to receive(:new).and_return(null_object)
+  end
 end

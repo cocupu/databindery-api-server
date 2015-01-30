@@ -6,7 +6,7 @@ class Identity < ActiveRecord::Base
   has_many :exhibits, :through=>:pools#, :foreign_key=>'owner_id', :dependent => :destroy
   has_many :models, :foreign_key=>'identity_id', :dependent => :destroy
   has_many :mapping_templates, :dependent => :destroy
-  has_many :google_accounts, :foreign_key=>'owner_id', :dependent => :destroy
+  # has_many :google_accounts, :foreign_key=>'owner_id', :dependent => :destroy
   has_many :contributions, :class_name => "Node", :foreign_key=>"modified_by_id"
   has_and_belongs_to_many :audiences
   # validates :short_name, :presence=>true

@@ -1,0 +1,1 @@
+module Bindery::Persistence::Solr ; end

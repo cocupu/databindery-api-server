@@ -18,7 +18,9 @@ cd databindery-api-server
 bundle install
 rake db:create
 rake db:migrate
+rake elasticsearch:testcluster:start
 rake spec
+rake elasticsearch:testcluster:stop
 rake swagger:docs
 open http://localhost:3000/api-docs
 ```

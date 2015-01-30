@@ -22,6 +22,8 @@ gem "rsolr"
 gem "solrizer"
 gem "blacklight"
 
+gem "elasticsearch"
+
 # API & Documentation
 gem "swagger-docs", "~> 0.1.9"
 
@@ -48,6 +50,7 @@ group :test, :development do
   gem "rspec-rails"
   gem "factory_girl_rails"
   gem "byebug"
+  gem "elasticsearch-extensions"
 end
 
 

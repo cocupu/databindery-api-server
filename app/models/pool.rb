@@ -1,6 +1,7 @@
 class Pool < ActiveRecord::Base
   include ActiveModel::ForbiddenAttributesProtection
   include Bindery::Identifiable
+  include Bindery::Persistence::ElasticSearch::Pool
   
   before_create :generate_uuid
   before_destroy :delete_bucket

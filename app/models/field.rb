@@ -1,11 +1,13 @@
 class Field < ActiveRecord::Base
+  include Bindery::Persistence::ElasticSearch::Field
+
   has_and_belongs_to_many :models
   validates :name, presence: true, if: "code.nil?"
   before_create :initialize_name_and_code
   # after_create  :initialize_uri
 
   def to_param
-    id.to_s
+    self.code
   end
 
   # Include the type in json representation of Fields
@@ -33,7 +35,7 @@ class Field < ActiveRecord::Base
   # If name is empty, sets it to humanized version of the code.
   # Assumes that a validator ensures that there is at least a code or a name set.
   def initialize_name_and_code
-    self.code ||= self.name.downcase
+    self.code ||= self.name.gsub(" ", "_").downcase
     self.name ||= self.code.gsub("_", " ").capitalize
   end
 
@@ -44,9 +46,13 @@ class Field < ActiveRecord::Base
   #   end
   # end
 end
+
 class TextField < Field;end
 class TextArea < Field;end
-class IntegerField < Field;end
+class NumberField < Field;end
+class IntegerField < NumberField;end
+class BooleanField < Field;end
+class AttachmentField < Field;end
 class DateField < Field
   def sanitize(value)
     Time.parse(value).utc.iso8601 unless value.nil?
