@@ -11,6 +11,7 @@ module Bindery::Node
     include Bindery::Node::Forking
     include Bindery::Node::Importing
     include Bindery::Node::Associations
+    include Bindery::Persistence::ElasticSearch::Node
 
     after_find :add_behaviors
   end
