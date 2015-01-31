@@ -203,7 +203,7 @@ describe Api::V1::ModelsController do
         model.save
         put :update, :id=>model, :model=>{:label_field_id=>last_name_field.id}
         json = JSON.parse(response.body)
-        expect(json["label_field_id"]).to eq(last_name_field.to_param)
+        expect(json["label_field_id"]).to eq(last_name_field.id.to_s)
         expect(model.reload.label_field).to eq last_name_field
       end
       it "should be able to set label_field to a new field via the field's code (instead of id)" do

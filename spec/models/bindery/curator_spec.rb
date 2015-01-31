@@ -12,9 +12,9 @@ describe Bindery::Curator do
                                        fields_attributes: [{:code=>'full_name'}])
       @source_model = FactoryGirl.create(:model, pool: @pool, label: 'title',
                                          fields_attributes: [{:code=>'submitted_by'}, {:code=>'location'}, {:code=>'title'}])
-      @node1 = FactoryGirl.create(:node, model: @source_model, pool: @pool, :data=>@source_model.convert_data_field_codes_to_id_strings({'submitted_by'=>'Justin Coyne', 'location'=>'Malibu', 'title'=>'My Vacation'}))
-      @node2 = FactoryGirl.create(:node, model: @source_model, pool: @pool, :data=>@source_model.convert_data_field_codes_to_id_strings({'submitted_by'=>'Matt Zumwalt', 'location'=>'Berlin', 'title'=>'My Holiday'}))
-      @node3 = FactoryGirl.create(:node, model: @source_model, pool: @pool, :data=>@source_model.convert_data_field_codes_to_id_strings({'submitted_by'=>'Justin Coyne', 'location'=>'Bali', 'title'=>'My other Vacation'}))
+      @node1 = FactoryGirl.create(:node, model: @source_model, pool: @pool, :data=>{'submitted_by'=>'Justin Coyne', 'location'=>'Malibu', 'title'=>'My Vacation'})
+      @node2 = FactoryGirl.create(:node, model: @source_model, pool: @pool, :data=>{'submitted_by'=>'Matt Zumwalt', 'location'=>'Berlin', 'title'=>'My Holiday'})
+      @node3 = FactoryGirl.create(:node, model: @source_model, pool: @pool, :data=>{'submitted_by'=>'Justin Coyne', 'location'=>'Bali', 'title'=>'My other Vacation'})
       @submitted_by_field = @source_model.fields.where(code:'submitted_by').first
       @location_field = @source_model.fields.where(code:'location').first
       @title_field = @source_model.fields.where(code:'title').first

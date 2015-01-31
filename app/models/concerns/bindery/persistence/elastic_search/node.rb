@@ -8,7 +8,7 @@ module Bindery::Persistence::ElasticSearch::Node
   end
 
   def to_elasticsearch
-
+    data
   end
 
   class NodeIndexer

@@ -139,7 +139,16 @@ class Model < ActiveRecord::Base
   # The key to use for looking up the node label within the data on nodes belonging to this Model
   # Currently hard-coded as the stringified id of the Model's label_field
   def label_key
-    label_field_id.to_s
+    label_field_code
+  end
+
+  def label_field_code
+    result = Field.where(id:label_field_id).select(:code).first
+    if result
+     return result.code
+    else
+      return nil
+    end
   end
 
   def to_uri

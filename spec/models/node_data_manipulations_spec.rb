@@ -6,23 +6,26 @@ describe Node do
   let(:model) { FactoryGirl.create(:model, fields:[full_name_field,location_field])}
   subject { Node.new(model:model, data:{ full_name_field.to_param => "My Value" })}
   describe "field_value" do
-    it "should get field values by field id" do
-      expect( subject.field_value(full_name_field.id) ).to eq("My Value")
+    it "gets field values by field code" do
+      expect( subject.field_value(full_name_field.code) ).to eq("My Value")
     end
-    it "should get field values by field code" do
-      expect( subject.field_value(full_name_field.code, :find_by => :code) ).to eq("My Value")
+    it "supports getting field values by field id" do
+      expect( subject.field_value(full_name_field.id, :find_by=> :id) ).to eq("My Value")
+    end
+    it "supports getting field values by field name" do
+      expect( subject.field_value(full_name_field.name, :find_by=> :name) ).to eq("My Value")
     end
   end
   describe "set_field_value" do
-    it "should set field values by field id and return the new value" do
-      expect( subject.set_field_value(full_name_field.id, "NEW VALUE") ).to eq("NEW VALUE")
-      expect( subject.field_value(full_name_field.id) ).to eq("NEW VALUE")
+    it "sets field values by field code and returns the new value" do
+      expect(  subject.set_field_value(full_name_field.code, "NEW VALUE") ).to eq("NEW VALUE")
+      expect( subject.field_value(full_name_field.code) ).to eq("NEW VALUE")
     end
-    it "should set field values by field code" do
-      expect(  subject.set_field_value(full_name_field.code, "NEW VALUE", :find_by => :code) ).to eq("NEW VALUE")
-      expect( subject.field_value(full_name_field.id) ).to eq("NEW VALUE")
+    it "supports setting field values by field id" do
+      expect( subject.set_field_value(full_name_field.id, "NEW VALUE", :find_by => :id) ).to eq("NEW VALUE")
+      expect( subject.field_value(full_name_field.code) ).to eq("NEW VALUE")
     end
-    it "should raise error if no field id is available" do
+    it "raises an error if no field id is available" do
       expect{ subject.set_field_value("nonexistent_field", "NEW VALUE", :find_by => :code) }.to raise_error(ArgumentError)
     end
   end

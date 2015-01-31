@@ -2,21 +2,23 @@ module Bindery::Node::DataManipulations
   extend ActiveSupport::Concern
 
   # Getter for field values
-  # Uses #lookup_field_id_string to figure out which field key to use
+  # Uses #lookup_field_code to figure out which field key to use
   # @example
-  #   field_value(48)
+  #   field_value("full_name")
   # @example find by field code
   #   field_value("full_name", :find_by => :code)
+  # @example find by field code
+  #   field_value(48, :find_by => :id)
   # @example find by field name
   #   field_value("Full Name", :find_by => :name)
   def field_value(field_identifier, options={})
-    data[lookup_field_id_string(field_identifier, options)]
+    data[lookup_field_code(field_identifier, options)]
   end
 
   # Sets field value corresponding to identifier
   # Supports same options as #field_value
   def set_field_value(field_identifier, value, options={})
-    id_string = lookup_field_id_string(field_identifier, options)
+    id_string = lookup_field_code(field_identifier, options)
     if id_string.nil?
       raise ArgumentError, "Couldn't set field value. This node's model (#{model.name}) doesn't have a field whose #{options[:find_by]} is set to #{field_identifier}. Called on node #{self.id}"
     end
@@ -24,21 +26,22 @@ module Bindery::Node::DataManipulations
   end
 
   # Returns the id string corresponding to the given field_identifier
-  # Assumes field_identifier is field id unless you provide :find_by in the options
+  # Assumes field_identifier is field code unless you provide :find_by in the options
   # @example
-  #   lookup_field_id_string(48)
-  #   => "48"
-  # @example find by field code
-  #   lookup_field_id_string("full_name", :find_by => :code)
-  #   => "48"
+  #   lookup_field_code("full_name")
+  #   => "full_name"
+  # @example find by field code (default)
+  #   lookup_field_code("full_name", :find_by => :code)
+  #   => "full_name"
+  # @example find by field id
+  #   lookup_field_code(48, :find_by => :code)
+  #   => "full_name"
   # @example find by field name
-  #   lookup_field_id_string("Full Name", :find_by => :name)
-  #   => "48"
-  def lookup_field_id_string(field_identifier, options={})
-    if options[:find_by] == :code
-      return model.map_field_codes_to_id_strings[field_identifier]
-    elsif options[:find_by]
-      field = model.fields.where(options[:find_by] => field_identifier).select(:id).first
+  #   lookup_field_code("Full Name", :find_by => :name)
+  #   => "full_name"
+  def lookup_field_code(field_identifier, options={})
+    if options[:find_by]
+      field = model.fields.where(options[:find_by] => field_identifier).select(:code,:id).first
       return field.to_param unless field.nil?
     else
       return field_identifier.to_s

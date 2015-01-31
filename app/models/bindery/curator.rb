@@ -5,17 +5,17 @@ module Bindery
     include Blacklight::SolrHelper
     include Singleton
 
-    # Spawn new :destination_model nodes using the :source_field_name field from :source_model nodes,
+    # Spawn new :destination_model nodes using the :source_field_code field from :source_model nodes,
     # setting the extracted value as the :destination_field_name field on the resulting spawned nodes.
     #
     # @param identity_id
     # @param pool_id
     # @param source_model_id Model whose field(s) you're spawning new Nodes from
-    # @param source_field_name field name of field to spawn
+    # @param source_field_code field name of field to spawn
     # @param association_code Code for the association to use to point from source nodes to spawned nodes
     # @param destination_model_id model to spawn new nodes of
     # @param destination_field_name field name to set on spawned nodes
-    def spawn_from_field(identity, pool, source_model, source_field_name, association_code, destination_model, destination_field_name, opts={})
+    def spawn_from_field(identity, pool, source_model, source_field_code, association_code, destination_model, destination_field_name, opts={})
       # If identity was provided as ID, or short_name instead of an Identity object, load it
       if identity.instance_of?(String)
         if /\A[-+]?\d+\z/ === identity
@@ -26,8 +26,6 @@ module Bindery
       end
       pool = Pool.find_by_short_name(pool) unless pool.instance_of?(Pool)
       source_model = Model.find(source_model) unless source_model.instance_of?(Model)
-      # source_field = source_model.fields.where(code:source_field_name).first
-      source_field_id = source_model.map_field_codes_to_id_strings[source_field_name].to_s
       unless destination_model.instance_of?(Model)
         begin
           destination_model = Model.find(destination_model)
@@ -47,7 +45,7 @@ module Bindery
         raise StandardError, "Source model already has an association called #{association_code}, but it references model #{source_model_association.references} when you are trying to use that association to point at model #{destination_model.id}."
       end
       source_nodes = source_model.nodes_head(pool: pool)
-      source_field_values = source_nodes.map {|sn| sn.data[source_field_id]}.uniq
+      source_field_values = source_nodes.map {|sn| sn.data[source_field_code]}.uniq
       source_field_values.reject! do |v|
         v.nil? || v.empty?
       end
@@ -57,12 +55,12 @@ module Bindery
         destination_node_data = {destination_field_name=>value_to_spawn}
         destination_node = find_or_create_node(pool:pool, model:destination_model, data:destination_node_data)
         # puts "...Selecting nodes to process"
-        source_nodes_to_process = source_nodes.select {|sn| sn.data[source_field_id] == value_to_spawn}
+        source_nodes_to_process = source_nodes.select {|sn| sn.data[source_field_code] == value_to_spawn}
         # puts "...Found #{source_nodes_to_process.count} nodes to process"
         source_nodes_to_process.each do |sn|
           sn.data[source_model_association.to_param] = [destination_node.persistent_id]
           if opts[:delete_source_value] == true
-            sn.data.delete(source_field_id)
+            sn.data.delete(source_field_code)
           end
           unless opts[:also_move].nil?
             opts[:also_move].each do |fn|
@@ -89,10 +87,19 @@ module Bindery
         destination_node.save
       end
       if opts[:delete_source_value] == true
-        also_move = opts.fetch(:also_move,[]).map{|field_code| source_model.map_field_codes_to_id_strings[field_code]}.compact
-        to_remove = [source_field_id] + also_move
-        to_remove.each do |field_id|
-          source_model.fields.delete( field_id )
+        also_move = opts.fetch(:also_move,[])
+        to_remove = [source_field_code] + also_move
+        to_remove.each do |field_info|
+          if field_info.instance_of?(String)
+            field_code = field_info
+          elsif field_info.instance_of?(Hash)
+            field_code = field_info.keys.first
+          end
+          field_to_remove = source_model.fields.where(code:field_code).first
+          if field_to_remove
+            source_model.fields.delete(field_to_remove)
+          end
+          # source_model.fields.delete( field_id )
         end
         source_model.save
       end
@@ -110,17 +117,16 @@ module Bindery
     # If the destination node already has values in this field stored as an Array, it appends the ones being copied.
     # If you want to use a new field code in the destination node, pass the new code as the value of :rename_to in the opts Hash
     # This does not delete the field from the source node.  To do that, use move_field.
-    def copy_field(field_name, source_node, destination_node, opts={})
+    def copy_field(field_code, source_node, destination_node, opts={})
       if opts[:rename_to].nil? || opts[:rename_to].empty?
-        dest_field_name = field_name
+        dest_field_code = field_code
       else
-        dest_field_name = opts[:rename_to]
+        dest_field_code = opts[:rename_to]
       end
-      dest_field_id = destination_node.lookup_field_id_string(dest_field_name, :find_by=> :code)
-      if destination_node.data[dest_field_id].instance_of?(Array)
-        destination_node.data[dest_field_id] << source_node.field_value(field_name, :find_by=> :code)
+      if destination_node.data[dest_field_code].instance_of?(Array)
+        destination_node.data[dest_field_code] << source_node.field_value(field_code, :find_by=> :code)
       else
-        destination_node.data[dest_field_id] = source_node.field_value(field_name, :find_by=> :code)
+        destination_node.data[dest_field_code] = source_node.field_value(field_code, :find_by=> :code)
       end
     end
 
@@ -206,7 +212,6 @@ module Bindery
           destination_model.save
         end
       end
-
     end
   end
 end
