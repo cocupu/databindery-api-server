@@ -3,7 +3,7 @@ require  'rails_helper'
 describe Bindery::Persistence::ElasticSearch::Node do
 
   subject{ ::Node.new }
-  let(:elasticsearch) { Bindery::Persistence::ElasticSearch.client }
+  let(:elastic_search) { Bindery::Persistence::ElasticSearch.client }
   let(:identity) { FactoryGirl.create :identity }
   let(:pool){ FactoryGirl.create :pool, :owner=>identity }
   let(:first_name_field) { FactoryGirl.create :first_name_field }
@@ -26,11 +26,15 @@ describe Bindery::Persistence::ElasticSearch::Node do
   end
 
   describe "integration", sidekiq: :inline, elasticsearch: true do
-    it "indexes the record in elasticsearch" do
+    it "indexes the record in elasticsearch on create, deletes it from elasticsearch on destroy" do
       node = FactoryGirl.create(:node, model:model, pool:pool)
-      sleep 2
+      sleep 1
       result = Bindery::Persistence::ElasticSearch.client.search index: pool.to_param, q:"id:#{node.persistent_id}"
       expect(result["hits"]["total"]).to eq 1
+      node.destroy
+      sleep 1
+      result = Bindery::Persistence::ElasticSearch.client.search index: pool.to_param, q:"id:#{node.persistent_id}"
+      expect(result["hits"]["total"]).to eq 0
     end
   end
 
@@ -45,7 +49,7 @@ describe Bindery::Persistence::ElasticSearch::Node do
     it "uses an asynchronous job to index its data into elasticsearch" do
       node = FactoryGirl.create(:node)
       node.data["foo"] ="bar"
-      expect(Bindery::Persistence::ElasticSearch::Node::NodeIndexer).to receive(:perform_async).twice # really should be called once, but it's being called twice.  Not sure why.
+      expect(Bindery::Persistence::ElasticSearch::Node::NodeIndexer).to receive(:perform_async).once
       node.save
     end
   end
@@ -58,7 +62,7 @@ describe Bindery::Persistence::ElasticSearch::Node do
     end
   end
 
-  describe "to_elasticsearch" do
+  describe "as_elasticsearch" do
 
     describe "with data" do
       before do
@@ -68,7 +72,7 @@ describe Bindery::Persistence::ElasticSearch::Node do
 
       it "should produce a hash with correct field names" do
         # f1 is not defined as a field on the model, so it's not indexed.
-        expect(subject.to_elasticsearch).to eq subject.data.merge( {'id'=>subject.persistent_id, '_bindery_title'=>subject.title,'_bindery_node_version'=>subject.id, '_bindery_model_name' =>subject.model.name, '_bindery_pool' => pool.id, '_bindery_format'=>'Node', '_bindery_model'=>subject.model.id} )
+        expect(subject.as_elasticsearch).to eq subject.data.merge( {'id'=>subject.persistent_id, '_bindery_title'=>subject.title,'_bindery_node_version'=>subject.id, '_bindery_model_name' =>subject.model.name, '_bindery_pool' => pool.id, '_bindery_format'=>'Node', '_bindery_model'=>subject.model.id} )
       end
     end
 
@@ -91,7 +95,7 @@ describe Bindery::Persistence::ElasticSearch::Node do
         subject.save!
       end
       it "should index the properties of the child associations and add their persistent ids to a bindery__associations facet field" do
-        expect(subject.to_elasticsearch).to eq ( {'id'=>subject.persistent_id, '_bindery_node_version'=>subject.id, '_bindery_model_name' =>subject.model.name, '_bindery_pool' => pool.id,
+        expect(subject.as_elasticsearch).to eq ( {'id'=>subject.persistent_id, '_bindery_node_version'=>subject.id, '_bindery_model_name' =>subject.model.name, '_bindery_pool' => pool.id,
                                    '_bindery_format'=>'Node', '_bindery_model'=>subject.model.id,
                                    'contributing_authors'=>['Agatha Christie', 'Raymond Chandler'],
                                    'contributing_authors__full_name'=>['Agatha Christie', 'Raymond Chandler'],

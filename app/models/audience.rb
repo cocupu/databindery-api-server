@@ -6,6 +6,20 @@ class Audience < ActiveRecord::Base
 
   accepts_nested_attributes_for :filters, allow_destroy: true
 
+  # Index-agnostic method name (aliases to elasticsearch implementation)
+  def apply_query_params(query_params, user_params={})
+    apply_elasticsearch_params(query_params, user_params)
+  end
+
+  # Elasticsearch implementation
+  def apply_elasticsearch_params(elasticsearch_params, user_params={})
+    filters.each do |filter|
+      filter.apply_elasticsearch_params(elasticsearch_params, user_params)
+    end
+    return elasticsearch_params, user_params
+  end
+
+  # Solr Implementation
   def apply_solr_params(solr_params, user_params={})
     filters.each do |filter|
       filter.apply_solr_params(solr_params, user_params)

@@ -130,9 +130,41 @@ module Bindery
       end
     end
 
-    # Uses advanced search request handler to find Nodes matching the request.
+
+    # Looks in Elasticsearch to find Nodes matching the request.
     # Currently only searches against attribute values.  Does not search against associations (though associations in the create request will be applied to the Node if created.)
     def find_or_create_node(node_attributes)
+      node_attributes = node_attributes.with_indifferent_access
+      pool = node_attributes[:pool]
+      model = node_attributes[:model]
+      node = ::Node.new(node_attributes)
+      if  model.nodes.empty?
+        node.save
+      else
+        elasticsearch = Bindery::Persistence::ElasticSearch.client
+
+        must_match_queries = [{'_bindery_model'=>model.id},{'_bindery_format'=>"Node"}]
+        node.attributes_for_index.each_pair do |key, value|
+          must_match_queries << {key => value}
+        end
+        query =  { bool: {must: must_match_queries.map{|mmq| {match:mmq } }}}
+        search_response = elasticsearch.search index: pool.to_param, body: { query: query}
+
+        # If any docs were found, load the first result as a node and return that.
+        # Otherwise, create a new one based on the params provided.
+        first_result = search_response["hits"]["hits"].first
+        if first_result.nil?
+          node.save
+        else
+          node = ::Node.find(first_result['_source']['_bindery_node_version'])
+        end
+      end
+      return node
+    end
+
+    # Uses advanced search request handler to find Nodes matching the request.
+    # Currently only searches against attribute values.  Does not search against associations (though associations in the create request will be applied to the Node if created.)
+    def solr_find_or_create_node(node_attributes)
       node_attributes = node_attributes.with_indifferent_access
       pool = node_attributes[:pool]
       model = node_attributes[:model]
@@ -150,7 +182,7 @@ module Bindery
 
         query_parts = []
         query_fields = []
-        node.solr_attributes.each_pair do |key, value|
+        node.attributes_for_index.each_pair do |key, value|
           query_parts << "#{key}:\"#{value}\""
           query_fields << key
         end
@@ -158,7 +190,7 @@ module Bindery
         fq = [fq,query_parts.join(" && ")].join(" AND ")
 
         ## TODO do we need to add query_fields for File entities?
-        # query_fields = pool.models.map {|model| model.keys.map{ |key| ::Node.solr_name(key) } }.flatten.uniq
+        # query_fields = pool.models.map {|model| model.keys.map{ |key| ::Node.field_name_for_index(key) } }.flatten.uniq
         query_fields = query_fields.flatten.uniq
         (solr_response, facet_fields) = get_search_results( {:q=>query}, {:qf=>(query_fields + ["pool"]).join(' '), :qt=>'advanced', fl:"id version format", :fq=>fq, :rows=>10, 'facet.field' => ['name_si', 'model']})
 

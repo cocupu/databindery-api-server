@@ -70,7 +70,7 @@ RSpec.configure do |config|
       Sidekiq::Testing.fake!
     end
 
-    if example.metadata[:elasticsearch] == true
+    if example.metadata[:elastic_search] == true
       # Do nothing (don't stub)
     else
       stub_elasticsearch_adapters

@@ -33,17 +33,6 @@ describe Api::V1::PoolDataController do
           get :index, :pool_id=>other_pool
           response.should be_success
         end
-        describe "grid view" do
-          it "should filter to one model" do
-            my_model_different_pool # Trigger creation of this model before running this test
-            get :index, :pool_id=>other_pool, view:"grid"
-            subject.solr_search_params[:fq].should include("model:#{my_model_different_pool.id}")
-          end
-          it "should support choosing model" do
-            get :index, :pool_id=>other_pool, model_id: my_model_different_pool.id, view:"grid"
-            subject.solr_search_params[:fq].should include("model:#{my_model_different_pool.id}")
-          end
-        end
       end
       describe "requesting a pool I own" do
         it "should be successful" do
@@ -90,7 +79,7 @@ describe Api::V1::PoolDataController do
         [@node1, @node2, @node3, @node4].each {|n| pids.should include(n.persistent_id)}
       end
       it "should allow faceted queries" do
-        get :index, :pool_id=>other_pool, :format=>:json, "nodesOnly"=>"true", "f" => {Node.solr_name("make", type: "facet") => "barf"}
+        get :index, :pool_id=>other_pool, :format=>:json, "nodesOnly"=>"true", "f" => {Node.field_name_for_index("make", type: "facet") => "barf"}
         expect(response).to  be_successful
         json = JSON.parse(response.body)
         pids = json.map {|doc| doc["id"]}

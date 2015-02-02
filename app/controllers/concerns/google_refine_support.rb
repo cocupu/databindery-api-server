@@ -48,7 +48,7 @@ module GoogleRefineSupport
       solr_parameters["rows"] =  query_params["limit"] unless query_params["limit"].nil?
       solr_parameters[:fq] ||= []
       if query_params["type"] # && query_params["type_strict"] == "should"
-        solr_parameters[:fq] << "+#{Node.solr_name("model_name", type:"facet")}:\"#{query_params["type"]}\""
+        solr_parameters[:fq] << "+#{Node.field_name_for_index("model_name", type:"facet")}:\"#{query_params["type"]}\""
       end
       # Examples of property_query values
       #{ "p" => "year", "v" => 2009 },
@@ -65,7 +65,7 @@ module GoogleRefineSupport
         if property_name == "model_id"
           property_name = "model"
         end
-        solr_parameters[:fq] << "+#{Node.solr_name(property_name)}:\"#{property_query["v"]}\"" unless (property_name.nil? || property_query["v"].nil?)
+        solr_parameters[:fq] << "+#{Node.field_name_for_index(property_name)}:\"#{property_query["v"]}\"" unless (property_name.nil? || property_query["v"].nil?)
       end
       solr_parameters[:fl] = "*,score"
     end

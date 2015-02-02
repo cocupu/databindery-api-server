@@ -9,10 +9,10 @@ FactoryGirl.define do
     label "MyString"
   end
   factory :model_name_field, class:Field do
-    name "model_name"
+    name "_bindery_model_name"
   end
   factory :model_field, class:IntegerField do
-    name "model"
+    name "_bindery_model"
   end
   factory :subject_field, class:TextField do
     name "subject"

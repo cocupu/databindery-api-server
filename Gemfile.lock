@@ -105,6 +105,9 @@ GEM
     hike (1.2.3)
     hitimes (1.2.2)
     i18n (0.7.0)
+    jbuilder (2.2.6)
+      activesupport (>= 3.0.0, < 5)
+      multi_json (~> 1.2)
     json (1.8.2)
     kaminari (0.16.1)
       actionpack (>= 3.0.0)
@@ -258,6 +261,7 @@ DEPENDENCIES
   elasticsearch-extensions
   factory_girl_rails
   foreigner
+  jbuilder
   omniauth
   pg
   rack-cors

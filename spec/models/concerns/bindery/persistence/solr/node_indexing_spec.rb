@@ -1,6 +1,17 @@
 require 'rails_helper'
 
-describe Node do
+describe Bindery::Persistence::Solr::Node do
+
+  before do
+    Node.include Bindery::Persistence::Solr::Node
+  end
+
+  subject {
+    node = ::Node.new
+    node.model = model
+    node
+  }
+
   let(:identity) { FactoryGirl.create :identity }
   let(:pool){ FactoryGirl.create :pool, :owner=>identity }
   let(:first_name_field) { FactoryGirl.create :first_name_field }
@@ -16,10 +27,6 @@ describe Node do
     FactoryGirl.create(:model,
                        fields: [first_name_field, last_name_field, title_field],
                        label_field: last_name_field)
-  end
-
-  before do
-    subject.model = model
   end
 
   it "should index itself when it's saved" do

@@ -1,6 +1,9 @@
 require 'rails_helper'
 
-describe SearchFilter do
+describe Bindery::Persistence::ElasticSearch::SearchFilter do
+
+  subject { SearchFilter.new }
+
   let(:field) { Field.new(code:"subject") }
   let(:location_field) { Field.new(code:"location") }
   let(:access_level_field) { Field.new(code:"access_level") }
@@ -23,47 +26,47 @@ describe SearchFilter do
     reloaded.filterable.should == exhibit
     exhibit.reload.filters.should == [reloaded]
   end
-  describe "apply_solr_params" do
-    it "should render solr params" do
+  describe "apply_elasticsearch_params" do
+    it "should render elasticsearch params" do
       subject.field = field
       subject.operator = "+"
       subject.values = ["foo"]
-      solr_params, user_params = subject.apply_solr_params({}, {})
-      solr_params.should == {fq: ["subject_ssi:\"foo\""]}
+      elasticsearch_params, user_params = subject.apply_elasticsearch_params({}, {})
+      elasticsearch_params.should == {fq: ["subject:\"foo\""]}
       subject.values = ["bar","baz"]
-      solr_params, user_params = subject.apply_solr_params({}, {})
-      solr_params.should == {fq: ["subject_ssi:\"bar\" OR subject_ssi:\"baz\""]}
+      elasticsearch_params, user_params = subject.apply_elasticsearch_params({}, {})
+      elasticsearch_params.should == {fq: ["subject:\"bar\" OR subject:\"baz\""]}
     end
-    it "should vary solr field name based on field type" do
+    it "should vary elasticsearch field name based on field type" do
       subject.operator = "+"
       subject.values = ["foo"]
       subject.field = date_field
-      solr_params, user_params = subject.apply_solr_params({}, {})
-      solr_params.should == {fq: ["important_date_dtsi:\"foo\""]}
+      elasticsearch_params, user_params = subject.apply_elasticsearch_params({}, {})
+      elasticsearch_params.should == {fq: ["important_date:\"foo\""]}
       subject.field = integer_field
-      solr_params, user_params = subject.apply_solr_params({}, {})
-      solr_params.should == {fq: ["a_number_isi:\"foo\""]}
+      elasticsearch_params, user_params = subject.apply_elasticsearch_params({}, {})
+      elasticsearch_params.should == {fq: ["a_number:\"foo\""]}
       subject.field = text_area_field
-      solr_params, user_params = subject.apply_solr_params({}, {})
-      solr_params.should == {fq: ["notes_tsi:\"foo\""]}
+      elasticsearch_params, user_params = subject.apply_elasticsearch_params({}, {})
+      elasticsearch_params.should == {fq: ["notes:\"foo\""]}
       subject.field.multivalue = true
-      solr_params, user_params = subject.apply_solr_params({}, {})
-      solr_params.should == {fq: ["notes_tesim:\"foo\""]}
+      elasticsearch_params, user_params = subject.apply_elasticsearch_params({}, {})
+      elasticsearch_params.should == {fq: ["notes:\"foo\""]}
     end
   end
-  describe "#apply_solr_params_for_filters" do
+  describe "#apply_elasticsearch_params_for_filters" do
     before do
       @grant1 = SearchFilter.new(field:text_area_field, operator:"+", values:["birds"])
       @grant2 = SearchFilter.new(field:location_field, operator:"+", values:["Albuquerque"])
       @restrict1 = SearchFilter.new(field:access_level_field, operator:"+", values:["public"], filter_type:"RESTRICT")
     end
     it "should combine GRANT filters with OR" do
-      solr_params, user_params = SearchFilter.apply_solr_params_for_filters([@grant1, @grant2], {}, {})
-      solr_params[:fq].should == ['notes_tsi:"birds" OR location_ssi:"Albuquerque"']
+      elasticsearch_params, user_params = SearchFilter.apply_elasticsearch_params_for_filters([@grant1, @grant2], {}, {})
+      elasticsearch_params[:fq].should == ['notes:"birds" OR location:"Albuquerque"']
     end
     it "should put RESTRICT statements in their own :fq" do
-      solr_params, user_params = SearchFilter.apply_solr_params_for_filters([@grant1, @grant2, @restrict1], {}, {})
-      solr_params[:fq].should == ['+access_level_ssi:"public"','notes_tsi:"birds" OR location_ssi:"Albuquerque"']
+      elasticsearch_params, user_params = SearchFilter.apply_elasticsearch_params_for_filters([@grant1, @grant2, @restrict1], {}, {})
+      elasticsearch_params[:fq].should == ['+access_level:"public"','notes:"birds" OR location:"Albuquerque"']
     end
   end
 end

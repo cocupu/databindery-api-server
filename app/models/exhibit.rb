@@ -14,14 +14,11 @@ class Exhibit < ActiveRecord::Base
     self.index_fields ||= []
   end
 
-  # Apply the Exhibit's search logic to Blacklight Controller solr_params_logic
-  # @param solr_parameters [Hash] parameters hash that Blacklight will render as Solr query
+  # Apply the Exhibit's search logic the Controller's query params logic
+  # @param query_parameters [Hash] parameters hash that the Controller with render as a query to the index (elasticsearch or solr)
   # @param user_parameters [Hash] parameters from http request
-  def apply_solr_params_logic(solr_parameters, user_parameters)
-    SearchFilter.apply_solr_params_for_filters(filters, solr_parameters, user_parameters)
-    #filters.each do |filter|
-    #  filter.apply_solr_params(solr_parameters, user_parameters)
-    #end
-    return solr_parameters, user_parameters
+  def apply_query_params_logic(query_parameters, user_parameters)
+    SearchFilter.apply_query_params_for_filters(filters, query_parameters, user_parameters)
+    return query_parameters, user_parameters
   end
 end

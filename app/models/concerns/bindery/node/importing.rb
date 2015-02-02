@@ -13,7 +13,7 @@ module Bindery::Node::Importing
 
     def import_nodes(nodes)
       result = self.import(nodes)
-      Bindery.index( nodes.map {|n| n.to_solr} )
+      Bindery.index( nodes.map {|n| n.as_index_document} )
       Bindery.solr.commit
       result
     end

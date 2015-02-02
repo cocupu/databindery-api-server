@@ -15,6 +15,28 @@ module Bindery::Persistence::ElasticSearch::Pool
     @adapter ||= Adapter.new(self)
   end
 
+  # Index-agnostic method name for applying query params based on an identity
+  def apply_query_params_for_identity(identity, query_params={}, user_params={})
+    apply_elasticsearch_params_for_identity(identity, query_params, user_params)
+  end
+
+  # Applies elasticsearch query params based on an identity
+  def apply_elasticsearch_params_for_identity(identity, elasticsearch_params={}, user_params={})
+    # Unless user has explicit read/edit access, apply filters based on audience memberships
+    if access_controls.where(identity_id:identity.id).empty?
+      filters = []
+      audiences_for_identity(identity).each do |audience|
+        filters.concat(audience.filters)
+      end
+      if filters.empty?
+        SearchFilter.apply_elasticsearch_params_for_filters(default_filters, elasticsearch_params, user_params)
+      else
+        SearchFilter.apply_elasticsearch_params_for_filters(filters, elasticsearch_params, user_params)
+      end
+    end
+    return elasticsearch_params, user_params
+  end
+
   # Provides adapter which implements the methods to call elasticsearch
   class Adapter
     include Bindery::Persistence::ElasticSearch::Common

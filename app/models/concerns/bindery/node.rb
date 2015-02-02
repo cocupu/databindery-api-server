@@ -6,12 +6,12 @@ module Bindery::Node
     include Bindery::Node::DataManipulations
     include Bindery::Node::HasFiles
     include Bindery::Node::Finders
-    include Bindery::Node::Indexing
     include Bindery::Node::Versioning
     include Bindery::Node::Forking
     include Bindery::Node::Importing
     include Bindery::Node::Associations
     include Bindery::Persistence::ElasticSearch::Node
+    # include Bindery::Persistence::Solr::Node
 
     after_find :add_behaviors
   end

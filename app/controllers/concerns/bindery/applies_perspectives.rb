@@ -31,7 +31,7 @@ module Bindery
 
     # Apply search filter logic from current exhibit
     def apply_filters_from_exhibit(solr_parameters, user_parameters)
-      @exhibit.apply_solr_params_logic(solr_parameters, user_parameters)
+      @exhibit.apply_query_params_logic(solr_parameters, user_parameters)
     end
   end
 end

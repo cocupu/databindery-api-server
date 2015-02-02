@@ -4,8 +4,8 @@ describe Bindery::Curator do
   before do
 
   end
-  describe "spawn_from_fields" do
-    before do
+  describe "spawn_from_fields", sidekiq: :inline, elasticsearch: true  do
+    before(:all) do
       @identity = FactoryGirl.create :identity
       @pool = FactoryGirl.create :pool, :owner=>@identity
       @dest_model = FactoryGirl.create(:model, pool: @pool, label: 'full_name',
@@ -19,6 +19,14 @@ describe Bindery::Curator do
       @location_field = @source_model.fields.where(code:'location').first
       @title_field = @source_model.fields.where(code:'title').first
     end
+    # before do
+    #   @dest_model.fields.delete_all
+    #   @dest_model.fields_attributes = [{:code=>'full_name'}]
+    #   @source_model.fields.delete_all
+    #   @source_model.fields_attributes = [{:code=>'submitted_by'}, {:code=>'location'}, {:code=>'title'}]
+    #   @dest_model.save
+    #   @source_model.save
+    # end
     it "should extract entities from specified fields" do
       # it "should Spawn new :destination_model nodes using the :source_field_name field from :source_model nodes, setting the extracted value as the :destination_field_name field on the resulting spawned nodes." do
       @dest_model.nodes.count.should == 0
@@ -43,8 +51,10 @@ describe Bindery::Curator do
       matt.model.should == @dest_model
       matt.field_value("full_name", :find_by => :code).should == "Matt Zumwalt"
       n2.field_value("submitted_by", :find_by => :code).should be_nil
+      justin.destroy; matt.destroy  # This is to prevent these nodes from messing up the next test
     end
     it "should delete fields from source model and nodes if delete_source_value:true" do
+      sleep 1 # allow the dust to settle from the last test's cleanup
       Bindery::Curator.instance.spawn_from_field(@ident, @pool, @source_model.id, "submitted_by", "creator", @dest_model.id, "full_name", :delete_source_value=>true)
       @node1.latest_version.field_value("submitted_by", :find_by => :code).should be_nil
       @source_model.reload.fields.where(code:"submitted_by").should be_empty
@@ -119,7 +129,7 @@ describe Bindery::Curator do
     end
   end
 
-  describe "find_or_create_node" do
+  describe "find_or_create_node", sidekiq: :inline, elasticsearch: true do
     before do
       @identity = FactoryGirl.create :identity
       @pool = FactoryGirl.create :pool, :owner=>@identity
@@ -137,6 +147,7 @@ describe Bindery::Curator do
     end
 
     it "should return existing node  if one already fits the fields & values specified" do
+      sleep 1 # wait for the nodes to index into elasticsearch
       previous_number_of_nodes = Node.count
       result = Bindery::Curator.instance.find_or_create_node(pool:@pool, :model=>@model, :data=>@model.convert_data_field_codes_to_id_strings({"first_name" =>"Justin", "last_name" => "Coyne"}))
       Node.count.should == previous_number_of_nodes

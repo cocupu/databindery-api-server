@@ -157,12 +157,12 @@ describe Pool do
         subject.audiences_for_identity(@identity).should == [@aud1, @aud3]
       end
     end
-    describe "apply_solr_params_for_identity" do
+    describe "apply_query_params_for_identity" do
       it "should aggregate solr_params from all applicable audiences" do
         @aud1.update_attributes filters_attributes:[{field:subject_field, operator:"+", values:["foo","bar"]}]
         @aud3.update_attributes filters_attributes:[{field:location_field, filter_type:"RESTRICT", operator:"-", values:["baz"]}]
-        solr_params, user_params = subject.apply_solr_params_for_identity(@identity, {}, {})
-        solr_params.should == {fq: ["-location_ssi:\"baz\"", "subject_ssi:\"foo\" OR subject_ssi:\"bar\""]}
+        query_params, user_params = subject.apply_query_params_for_identity(@identity, {}, {})
+        expect(query_params).to eq ( {fq: ["-location:\"baz\"", "subject:\"foo\" OR subject:\"bar\""]} )
       end
     end
   end

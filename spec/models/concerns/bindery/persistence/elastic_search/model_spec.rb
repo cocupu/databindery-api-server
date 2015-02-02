@@ -2,7 +2,7 @@ require  'rails_helper'
 
 describe Bindery::Persistence::ElasticSearch::Model, elasticsearch:true do
 
-  let(:elasticsearch) { Bindery::Persistence::ElasticSearch.client }
+  let(:elastic_search) { Bindery::Persistence::ElasticSearch.client }
   subject { FactoryGirl.create(:model, fields_attributes:[{name:"First Name"},{name:"First Name"},{name:"Date of Birth"}]) }
 
   it "creates a corresponding elasticsearch type" do

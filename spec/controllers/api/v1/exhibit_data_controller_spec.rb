@@ -64,7 +64,7 @@ describe Api::V1::ExhibitDataController do
         field1 = @model1.fields.first
         field2 = @model1.fields[1]
         get :index, :exhibit_id=>@exhibit.id, :q=>'', sort_fields:[{field_id:field1.id,direction:"asc"},{field_id:field2.id,direction:"desc"}], :pool_id=>@pool
-        expect(subject.solr_search_params[:sort]).to eq("#{field1.solr_name} asc,#{field2.solr_name} desc")
+        expect(subject.solr_search_params[:sort]).to eq("#{field1.field_name_for_index} asc,#{field2.field_name_for_index} desc")
       end
     end
     describe "show" do

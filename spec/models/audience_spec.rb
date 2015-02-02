@@ -10,7 +10,13 @@ describe Audience do
     subject.save
     subject.filters.should == [@sf]
   end
+  it "should render query params based on filters" do
+    subject.update_attributes filters_attributes:[{field:subject_field, operator:"+", values:["foo","bar"]}, {filter_type:"RESTRICT", field:field2, operator:"-", values:["baz"]}]
+    query_params, user_params = subject.apply_query_params({}, {})
+    query_params.should == {:fq=>["-field2:\"baz\"", "subject:\"foo\" OR subject:\"bar\""]}
+  end
   it "should render solr params based on filters" do
+    pending "Solr-specific"
     subject.update_attributes filters_attributes:[{field:subject_field, operator:"+", values:["foo","bar"]}, {filter_type:"RESTRICT", field:field2, operator:"-", values:["baz"]}]
     solr_params, user_params = subject.apply_solr_params({}, {})
     solr_params.should == {:fq=>["-field2_ssi:\"baz\"", "subject_ssi:\"foo\" OR subject_ssi:\"bar\""]}

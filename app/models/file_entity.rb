@@ -250,13 +250,29 @@ module FileEntity
     h
   end
 
+  # Extends Solr documents to include FileEntity data
   def to_solr
-    solr_doc = super
+    if defined?(super)
+      solr_doc = super
+    else
+      solr_doc = {}
+    end
     [:mime_type,:content_type,:file_type,:storage_location_id,:file_size,:file_entity_type,:file_name].each do |method|
       solr_doc[method.to_s+"_ssi"] = self.send(method)
     end
     solr_doc
   end
+
+  # Extends Elasticsearch documents to include FileEntity data
+  def as_elasticsearch
+    elasticsearch_doc = super
+    [:mime_type,:content_type,:file_type,:storage_location_id,:file_size,:file_entity_type,:file_name].each do |method|
+      elasticsearch_doc[method.to_s] = self.send(method)
+    end
+    elasticsearch_doc
+  end
+
+
 
   # Set metadata (ie. filename for insertion into Content-Disposition) on object in remote file store
   def set_metadata

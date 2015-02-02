@@ -1,5 +1,7 @@
 module Bindery::Persistence::ElasticSearch
-
+  extend ActiveSupport::Autoload
+  autoload :QueryBuilder
+  autoload :FilterSet
   def self.client(opts={})
     opts = {log: false}.merge(elasticsearch_config).merge(opts)
     @client ||= Elasticsearch::Client.new opts

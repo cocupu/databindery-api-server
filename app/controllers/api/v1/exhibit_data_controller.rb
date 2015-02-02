@@ -67,9 +67,9 @@ class Api::V1::ExhibitDataController < ApplicationController
       # facet bar
       @exhibit.facets.uniq.each do |key|
         if key == "model_name"
-          config.add_facet_field Node.solr_name(key, type: 'facet'), :label => "Model", limit: 10
+          config.add_facet_field Node.field_name_for_index(key, type: 'facet'), :label => "Model", limit: 10
         else
-          config.add_facet_field Node.solr_name(key, type: 'facet'), :label => key.humanize, limit: 10
+          config.add_facet_field Node.field_name_for_index(key, type: 'facet'), :label => key.humanize, limit: 10
         end
       end
 
@@ -83,21 +83,21 @@ class Api::V1::ExhibitDataController < ApplicationController
       #   The ordering of the field names is the order of the display 
       @exhibit.index_fields.uniq.each do |f|
         if f == "model_name"
-          config.add_index_field Node.solr_name(f, type: 'facet'), :label => "Model"
+          config.add_index_field Node.field_name_for_index(f, type: 'facet'), :label => "Model"
         else
-          config.add_index_field Node.solr_name(f), :label => f.humanize+':' 
+          config.add_index_field Node.field_name_for_index(f), :label => f.humanize+':'
         end
       end
-      # query_fields = @exhibit.pool.models.map {|model| model.keys.map{ |key| Node.solr_name(key) } }.flatten.uniq
+      # query_fields = @exhibit.pool.models.map {|model| model.keys.map{ |key| Node.field_name_for_index(key) } }.flatten.uniq
       #solr_parameters[:qf] = query_fields + ["pool"]
 
       # solr fields to be displayed in the show (single result) view
       #   The ordering of the field names is the order of the display 
       @exhibit.index_fields.uniq.each do |f|
         if f == "model_name"
-          config.add_show_field Node.solr_name(f, type: 'facet'), :label => "Model"
+          config.add_show_field Node.field_name_for_index(f, type: 'facet'), :label => "Model"
         else
-          config.add_show_field Node.solr_name(f), :label => f.humanize+':' 
+          config.add_show_field Node.field_name_for_index(f), :label => f.humanize+':'
         end
       end
 
@@ -158,7 +158,7 @@ class Api::V1::ExhibitDataController < ApplicationController
       #end
       user_parameters[:sort_fields].each do |sort_options|
         field = Field.find(sort_options[:field_id])
-        sorts << "#{field.solr_name} #{sort_options[:direction]}"
+        sorts << "#{field.field_name_for_index} #{sort_options[:direction]}"
       end
       solr_parameters[:sort] = sorts.join(",")
     end

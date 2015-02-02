@@ -20,8 +20,8 @@ class Field < ActiveRecord::Base
     value
   end
 
-  def solr_name(options={})
-    Node.solr_name(self, options)
+  def field_name_for_index(options={})
+    Node.field_name_for_index(self, options)
   end
 
   # Finds or Creates a canonical field with the given code

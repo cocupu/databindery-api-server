@@ -29,8 +29,8 @@ describe Exhibit do
       subject.filters << SearchFilter.new(:field=>FactoryGirl.create(:access_level_field), :operator=>"+", :values=>["public"])
       subject.filters << SearchFilter.new(:filter_type=>"RESTRICT", :field=>FactoryGirl.create(:model_name_field), :operator=>"-", :values=>["song","person"])
       subject.filters << SearchFilter.new(:filter_type=>"RESTRICT", :field=>FactoryGirl.create(:location_field), :operator=>"-", :values=>["disk1"])
-      solr_params, user_params = subject.apply_solr_params_logic({}, {})
-      solr_params.should == {fq: ['-(model_name:"song" OR model_name:"person")', '-location_ssi:"disk1"', 'model:"1" OR model:"49" OR access_level_ssi:"public"']}
+      query_params, user_params = subject.apply_query_params_logic({}, {})
+      expect(query_params).to eq ( {fq: ['-(_bindery_model_name:"song" OR _bindery_model_name:"person")', '-location:"disk1"', '_bindery_model:"1" OR _bindery_model:"49" OR access_level:"public"']} )
     end
   end
 

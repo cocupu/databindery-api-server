@@ -89,6 +89,7 @@ describe FileEntity do
       subject.stub(:mime_type).and_return("image/jpeg")
       subject.content_type # this is usually called by #register
       subject.to_solr["content_type_ssi"].should == "Image"
+      subject.as_elasticsearch["content_type"].should == "Image"
     end
     describe "audio?" do
       it "should test for audio mimetypes" do

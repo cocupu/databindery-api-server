@@ -43,6 +43,7 @@ gem 'roo', "~> 1.12.2"
 
 # Misc
 gem 'uuid'
+gem 'jbuilder'
 
 # Development & Testing
 gem 'spring', :group => :development

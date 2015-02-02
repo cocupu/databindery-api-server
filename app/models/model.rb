@@ -91,7 +91,7 @@ class Model < ActiveRecord::Base
   def index
     ## only index the most recent version of each node
     max_ids = Node.unscoped.select('max(id) as max_id').where('model_id = ?', self.id).group(:persistent_id).map(&:max_id)
-    Bindery.index(Node.find(max_ids).map {|m| m.to_solr })
+    Bindery.index(Node.find(max_ids).map {|m| m.as_index_document })
   end
 
   # Keys used in Node data corresponding to all Fields in this Model

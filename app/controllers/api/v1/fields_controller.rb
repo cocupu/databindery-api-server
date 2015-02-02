@@ -27,13 +27,13 @@ class Api::V1::FieldsController < ApplicationController
 
     extra_controller_params = {}
     field_code = params[:id]
-    field_solr_name = Node.solr_name(field_code, type: "facet")
-    extra_controller_params[:fq] = "#{field_solr_name}:[* TO *]"
-    extra_controller_params["facet.field"] = field_solr_name
+    field_field_name_for_index = Node.field_name_for_index(field_code, type: "facet")
+    extra_controller_params[:fq] = "#{field_field_name_for_index}:[* TO *]"
+    extra_controller_params["facet.field"] = field_field_name_for_index
     extra_controller_params[:rows] = 0
 
     solr_response = query_solr(params, extra_controller_params)
-    values_info = {"numDocs"=>solr_response["response"]["numFound"],"values"=>hashify_facet_counts(solr_response["facet_counts"]["facet_fields"][field_solr_name])}
+    values_info = {"numDocs"=>solr_response["response"]["numFound"],"values"=>hashify_facet_counts(solr_response["facet_counts"]["facet_fields"][field_field_name_for_index])}
 
     respond_to do |format|
       format.html { redirect_to identity_pool_search_path(@identity.short_name, @pool.short_name) }
