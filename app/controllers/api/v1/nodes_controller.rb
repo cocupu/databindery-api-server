@@ -1,10 +1,11 @@
-class Api::V1::NodesController < ApplicationController
-  include Blacklight::Controller
-  include Blacklight::SolrHelper
+class Api::V1::NodesController < Api::V1::DataController
   load_and_authorize_resource :except=>[:index, :search, :update, :create, :import, :find_or_create], :find_by => :persistent_id
   before_filter :load_pool
   load_and_authorize_resource :pool
+  before_filter :set_perspective, only:[:search]
   load_resource :model, through: :node, singleton: true, only: [:show]
+
+  self.query_logic += [:constrain_to_model]
 
   def index
     if params[:model_id]
@@ -17,26 +18,20 @@ class Api::V1::NodesController < ApplicationController
     render json: @nodes.to_json
   end
 
+  def constrain_to_model(query_builder, user_parameters)
+    if @model
+      query_builder.filters.add_must_match({"_bindery_model"=>@model.id}, :filter)
+    end
+    return query_builder, user_parameters
+  end
+
   def search
     if params[:model_id]
       @model = Model.find(params[:model_id])
       authorize! :read, @model
     end
-
-    # Constrain results to this pool
-    fq = "pool:#{@pool.id}"
-    fq += " AND model:#{@model.id}" if @model
-    fq += " AND format:Node"
-
-    ## TODO do we need to add query_fields for File entities?
-    query_fields = @pool.models.map {|model| model.field_codes.map{ |key| Node.field_name_for_index(key) } }.flatten.uniq
-    (solr_response, @facet_fields) = get_search_results( params, {:qf=>(query_fields + ["pool"]).join(' '), :qt=>'search', :fq=>fq, :rows=>1000, 'facet.field' => ['name_si', 'model']})
-    
-    # puts "# of solr_docs: #{solr_response.docs.length}"
-    # puts "solr_response: #{solr_response.docs}"
-    @results = solr_response.docs.map{|d| serialize_node( Node.find_by_persistent_id(d['id']) ) }
-
-    render json: @results
+    (@response, @document_list) = get_search_results
+    render json: json_response(nodes_only:true)
   end
 
   def show
@@ -93,7 +88,7 @@ class Api::V1::NodesController < ApplicationController
   def import
     authorize! :create, Node
     model = @pool.models.find(params[:model_id])
-    @import_results = Node.bulk_import_records(params[:data], @pool, model)
+    @import_results = Node.bulk_import_data(params[:data], @pool, model)
     render :json=>@import_results
   end
   
@@ -169,7 +164,7 @@ class Api::V1::NodesController < ApplicationController
   end
 
   def serialize_node(n)
-    return n.as_json.merge({url: api_v1_pool_node_path(n.pool, n), pool: n.pool.short_name, identity: n.pool.owner.short_name, binding: n.binding, model_id: n.model_id })
+    return n.as_json.merge({url: api_v1_pool_node_path(n.pool, n), pool: n.pool.short_name, identity: n.pool.owner.id, binding: n.binding, model_id: n.model_id })
   end
 
   def blacklight_solr

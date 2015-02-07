@@ -3,7 +3,7 @@ require  'rails_helper'
 describe Bindery::Persistence::ElasticSearch::Node do
 
   subject{ ::Node.new }
-  let(:elastic_search) { Bindery::Persistence::ElasticSearch.client }
+  let(:elasticsearch) { Bindery::Persistence::ElasticSearch.client }
   let(:identity) { FactoryGirl.create :identity }
   let(:pool){ FactoryGirl.create :pool, :owner=>identity }
   let(:first_name_field) { FactoryGirl.create :first_name_field }
@@ -27,14 +27,27 @@ describe Bindery::Persistence::ElasticSearch::Node do
 
   describe "integration", sidekiq: :inline, elasticsearch: true do
     it "indexes the record in elasticsearch on create, deletes it from elasticsearch on destroy" do
-      node = FactoryGirl.create(:node, model:model, pool:pool)
+      node = FactoryGirl.create(:node, model:model, pool:pool, data:{"first_name"=>"Buzz", "last_name"=>"Aldrin"})
       sleep 1
       result = Bindery::Persistence::ElasticSearch.client.search index: pool.to_param, q:"id:#{node.persistent_id}"
       expect(result["hits"]["total"]).to eq 1
+      index_document = node.__elasticsearch__.get
+      expect(index_document["_source"]).to eq({"first_name"=>"Buzz", "last_name"=>"Aldrin", "id"=>node.persistent_id, "_bindery_title"=>"Aldrin", "_bindery_node_version"=>node.id, "_bindery_model_name"=>node.model.name, "_bindery_pool"=>node.pool_id, "_bindery_format"=>"Node", "_bindery_model"=>node.model_id})
       node.destroy
       sleep 1
       result = Bindery::Persistence::ElasticSearch.client.search index: pool.to_param, q:"id:#{node.persistent_id}"
       expect(result["hits"]["total"]).to eq 0
+    end
+    it "overwrites data values in elasticsearch document (rather than duplicating field values on update)" do
+      node = FactoryGirl.create(:node, model:model, pool:pool)
+      node.data["first_name"] = "Chinua"
+      node.data["last_name"] = "Achebe"
+      node.save
+      sleep 1
+      index_document = node.__elasticsearch__.get(fields:["first_name", "last_name", "_source"])
+      expect(index_document["fields"]["first_name"]).to eq(["Chinua"])
+      expect(index_document["fields"]["last_name"]).to eq(["Achebe"])
+      expect(index_document["_source"]).to eq({"first_name"=>"Chinua", "last_name"=>"Achebe", "id"=>node.persistent_id, "_bindery_title"=>"Achebe", "_bindery_node_version"=>node.id+1, "_bindery_model_name"=>node.model.name, "_bindery_pool"=>node.pool_id, "_bindery_format"=>"Node", "_bindery_model"=>node.model_id})
     end
   end
 

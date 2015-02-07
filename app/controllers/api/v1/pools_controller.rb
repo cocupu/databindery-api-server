@@ -5,9 +5,14 @@ class Api::V1::PoolsController < ApplicationController
   load_and_authorize_resource :only=>[:show, :edit]
 
   def index
-    ### This query finds all the pools belonging to @identity that can be seen by current_identity
-    @pools = Pool.for_identity(current_identity)
-    render :json=>@pools.map {|p| {short_name: p.short_name, name:p.name, description:p.description, identity:p.owner.short_name, url: api_v1_pool_path(p)}}
+    if current_identity.nil?
+      @pools = []
+    else
+      ### This query finds all the pools belonging to @identity that can be seen by current_identity
+      @pools = Pool.for_identity(current_identity)
+    end
+
+    render :json=>@pools.map {|p| {id: p.id, short_name: p.short_name, name:p.name, description:p.description, identity:p.owner.short_name, url: api_v1_pool_path(p)}}
   end
 
   def show

@@ -8,8 +8,11 @@ module Bindery
             @aggregations = aggregations
           end
 
-          def add_facet(name, options={})
-            options.merge!(type:'terms')
+          def add_facet(name, aggregation_parameters={})
+            options = {type:'terms'}
+            unless aggregation_parameters.empty?
+              options[:parameters] = aggregation_parameters
+            end
             aggregations << AggregationQuery.new(name, options)
           end
 
@@ -30,9 +33,9 @@ module Bindery
             if empty?
               return {}
             else
-              json = {'aggs'=>{}}
+              json = {"aggregations"=>{}}
               aggregations.each do |aggregation|
-                json['aggs'].merge!(aggregation.as_json)
+                json["aggregations"].merge!(aggregation.as_json)
               end
               return json
             end

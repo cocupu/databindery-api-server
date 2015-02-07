@@ -6,12 +6,14 @@ This is the main DataBindery code base.
 
 # Dependencies
 
-* Solr (soon to be replaced by ElasticSearch)
+* Elasticsearch 1.4.2
 * Postgresql
 * Redis
 * Ruby
 
 # TL;DR
+
+## Download and Run Tests
 ```
 git clone git@github.com/cocupu/databindery-api-server
 cd databindery-api-server
@@ -23,6 +25,25 @@ rake spec
 rake elasticsearch:testcluster:stop
 rake swagger:docs
 open http://localhost:3000/api-docs
+```
+
+## Run the Server
+```
+elasticsearch --config=./elasticsearch-dev.yml
+bundle exec sidekiq
+rails s
+```
+
+## Import Sample Data
+```
+rake bindery:seed
+```
+
+## Runing Elasticsearch
+
+If you have elasticsearch installed (ie. via `brew install elasticsearch`) you can run a development cluster using the included elasticsearch-dev.yml file
+```
+elasticsearch --config=./elasticsearch-dev.yml
 ```
 
 # Generated API Documentation
@@ -40,3 +61,4 @@ This will generate the [swagger](https://github.com/swagger-api/swagger-spec) js
 ## Viewing the Docs
 
 The code base includes a copy of [swagger-ui](https://github.com/swagger-api/swagger-ui) in public/api-docs.  This allows you to view an HTML version of the API documentation at http://localhost:3000/api-docs or (on production site) http://api.databindery.com/api-docs
+

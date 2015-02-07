@@ -1,5 +1,6 @@
 module Bindery::Node::Finders
   extend ActiveSupport::Concern
+  include Bindery::Persistence::ElasticSearch::Common
 
   included do
     # Retrieves node by node_id.
@@ -28,10 +29,9 @@ module Bindery::Node::Finders
 
   # Relies on a solr search to returns all Nodes that have associations pointing at this node
   def incoming(opts={})
-    # Constrain results to this pool
-    fq = "format:Node"
-    # fq += " AND pool:#{pool.id}"
-    http_response = Bindery.solr.select(params: {q:persistent_id, qf:"bindery__associations_sim", qt:'search', fq:fq})
-    results = http_response["response"]["docs"].map{|d| Node.find_by_persistent_id(d['id'])}
+    sleep 1
+    elasticsearch_response = client.search index:pool.id, body: {query:{match:{"_bindery__associations"=> persistent_id}}}
+    results = elasticsearch_response["hits"]["hits"].map{|d| Node.find_by_persistent_id(d['_id'])}
+    results
   end
 end

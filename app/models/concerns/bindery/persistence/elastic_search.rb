@@ -2,9 +2,19 @@ module Bindery::Persistence::ElasticSearch
   extend ActiveSupport::Autoload
   autoload :QueryBuilder
   autoload :FilterSet
+
   def self.client(opts={})
     opts = {log: false}.merge(elasticsearch_config).merge(opts)
     @client ||= Elasticsearch::Client.new opts
+  end
+
+  # Add documents to the index
+  # Documents is a single elasticsearch document or array of elasticsearch documents
+  def self.add_documents_to_index(documents)
+    documents = Array.wrap(documents)
+    documents.each do |doc|
+      Bindery::Persistence::ElasticSearch::Node::NodeIndexer.perform_async(doc['id'], index: doc['_bindery_pool'], type:doc['_bindery_model'], body:doc)
+    end
   end
 
   def self.elasticsearch_file

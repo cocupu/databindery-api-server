@@ -3,9 +3,10 @@ production:
 
 development:
   url: http://127.0.0.1:9200/
-  log: true
+#  log: true
 test: &test
   url: http://127.0.0.1:9250/
+#  log: true
 cucumber:
   <<: *test
 

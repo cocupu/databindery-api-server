@@ -4,8 +4,8 @@ module Bindery
 
     included do
       #load_and_authorize_resource :exhibit
-      before_filter :set_perspective
-      solr_search_params_logic << :apply_filters_from_exhibit
+      before_filter :set_perspective, only:[:index]
+      query_logic << :apply_filters_from_exhibit
     end
 
     def exhibit
@@ -30,8 +30,8 @@ module Bindery
     end
 
     # Apply search filter logic from current exhibit
-    def apply_filters_from_exhibit(solr_parameters, user_parameters)
-      @exhibit.apply_query_params_logic(solr_parameters, user_parameters)
+    def apply_filters_from_exhibit(query_parameters, user_parameters)
+      exhibit.apply_query_params_logic(query_parameters, user_parameters)
     end
   end
 end

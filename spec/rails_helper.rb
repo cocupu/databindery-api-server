@@ -70,10 +70,10 @@ RSpec.configure do |config|
       Sidekiq::Testing.fake!
     end
 
-    if example.metadata[:elastic_search] == true
+    if example.metadata[:elasticsearch] == true
       # Do nothing (don't stub)
     else
-      stub_elasticsearch_adapters
+      stub_elasticsearch
     end
 
   end
@@ -82,6 +82,12 @@ end
 
 def sign_in(login_credential)
   allow(controller).to receive(:current_login_credential).and_return login_credential
+end
+
+def stub_elasticsearch
+  indices_double = double("indices", put_mapping:true, delete_mapping:true, get_mapping:{}, create:true, put_alias:true )
+  elasticsearch_double = double('elasticsearch client', indices:indices_double, search:{"hits"=>{"hits"=>[]}})
+  allow(Bindery::Persistence::ElasticSearch).to receive(:client).and_return(elasticsearch_double)
 end
 
 def stub_elasticsearch_adapters

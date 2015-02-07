@@ -46,12 +46,25 @@ describe Api::V1::NodesController do
     end
   end
 
-  describe "search" do
+  describe "search", sidekiq: :inline, elasticsearch:true do
+    before(:all) do
+      Sidekiq::Testing.inline! # Ensure that node Indexers are run in this before(:all) block
+      @first_name_field = FactoryGirl.create(:first_name_field)
+      @last_name_field = FactoryGirl.create(:last_name_field)
+      @title_field = FactoryGirl.create(:title_field)
+      @pool = FactoryGirl.create(:pool)
+      @model = FactoryGirl.create(:model, pool:@pool, label_field:@first_name_field,
+                                       fields: [@first_name_field, @last_name_field,@title_field])
+      @node1 = FactoryGirl.create(:node, model: @model, pool: @pool, :data=>{"first_name" =>'Justin', "last_name"=>'Coyne', "title"=>'Mr.'})
+      @node2 = FactoryGirl.create(:node, model: @model, pool: @pool, :data=>{"first_name"=>'Matt', "last_name"=>'Zumwalt', "title"=>'Mr.'})
+      @different_pool_node = FactoryGirl.create(:node, model: @model )
+      @different_model_node = FactoryGirl.create(:node, pool: @pool)
+      sleep 1
+    end
+    let(:pool) {@pool}
+    let(:model) {@model}
+    let(:identity) {@pool.owner}
     before do
-      @node1 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.to_param =>'Justin', last_name_field.to_param=>'Coyne', title_field.to_param=>'Mr.'})
-      @node2 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.to_param=>'Matt', last_name_field.to_param=>'Zumwalt', title_field.to_param=>'Mr.'})
-      @different_pool_node = FactoryGirl.create(:node, model: model )
-      @different_model_node = FactoryGirl.create(:node, pool: pool)
       sign_in identity.login_credential
     end
     describe "when model is not provided" do
@@ -59,8 +72,8 @@ describe Api::V1::NodesController do
         get :search, :format=>'json', :pool_id => pool, identity_id: identity.short_name
         expect(response).to be_success
         json = JSON.parse(response.body)
-        json.map { |n| n["id"]}.should == [@node1.persistent_id, @node2.persistent_id, @different_model_node.persistent_id]
-        expect(json.first).to eq(expected_json_for_node(@node1, :as_json))
+        expect( json.map { |n| n["id"]}.sort).to eq [@node1.persistent_id, @node2.persistent_id, @different_model_node.persistent_id]
+        expect(json.select{|njs| njs["id"] == @node1.persistent_id}.first).to eq(JSON.parse(@node1.to_json))
       end
     end
     describe "when query is  provided" do
@@ -68,8 +81,8 @@ describe Api::V1::NodesController do
         get :search, :format=>'json', :q=>'Coyne', :pool_id => pool, identity_id: identity.short_name
         expect(response).to be_success
         json = JSON.parse(response.body)
-        json.map { |n| n["id"]}.should == [@node1.persistent_id]
-        expect(json.first).to eq(expected_json_for_node(@node1, :as_json))
+        expect( json.map { |n| n["id"]}.sort).to eq [@node1.persistent_id]
+        expect(json.first).to eq(JSON.parse(@node1.to_json))
       end
     end
     describe "when model is provided" do
@@ -77,8 +90,10 @@ describe Api::V1::NodesController do
         get :search, :format=>'json', :model_id=>model.id, :pool_id => pool, identity_id: identity.short_name
         expect(response).to be_success
         json = JSON.parse(response.body)
-        json.map { |n| n["id"]}.should == [@node1.persistent_id, @node2.persistent_id]
-        json.first["data"].should == @node1.data
+        expect(json.count).to eq 2
+        [@node1, @node2].each do |node|
+          expect(json).to include( JSON.parse(node.to_json))
+        end
       end
     end
   end
@@ -110,34 +125,47 @@ describe Api::V1::NodesController do
     end
   end
   
-  describe "find_or_create" do
+  describe "find_or_create", sidekiq: :inline, elasticsearch:true do
+    before(:all) do
+      Sidekiq::Testing.inline! # Ensure that node Indexers are run in this before(:all) block
+      @first_name_field = FactoryGirl.create(:first_name_field)
+      @last_name_field = FactoryGirl.create(:last_name_field)
+      @title_field = FactoryGirl.create(:title_field)
+      @pool = FactoryGirl.create(:pool)
+      @model = FactoryGirl.create(:model, pool:@pool, label_field:@first_name_field,
+                                  fields: [@first_name_field, @last_name_field,@title_field])
+      @node1 = FactoryGirl.create(:node, model: @model, pool: @pool, :data=>{@first_name_field.to_param=>'Justin', @last_name_field.to_param=>'Coyne', @title_field.to_param=>'Mr.'})
+      @node2 = FactoryGirl.create(:node, model: @model, pool: @pool, :data=>{@first_name_field.to_param=>'Matt', @last_name_field.to_param=>'Zumwalt', @title_field.to_param=>'Mr.'})
+      @node3 = FactoryGirl.create(:node, model: @model, pool: @pool, :data=>{@first_name_field.to_param=>'Justin', @last_name_field.to_param=>'Ball', @title_field.to_param=>'Mr.'})
+      sleep 1
+    end
+    let(:pool) {@pool}
+    let(:model) {@model}
+    let(:identity) {@pool.owner}
     before do
-      @node1 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.to_param=>'Justin', last_name_field.to_param=>'Coyne', title_field.to_param=>'Mr.'})
-      @node2 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.to_param=>'Matt', last_name_field.to_param=>'Zumwalt', title_field.to_param=>'Mr.'})
-      @node3 = FactoryGirl.create(:node, model: model, pool: pool, :data=>{first_name_field.to_param=>'Justin', last_name_field.to_param=>'Ball', title_field.to_param=>'Mr.'})
       sign_in identity.login_credential
     end
     it "should not be successful using a pool I can't edit" do       
-      post :find_or_create, :node => {:model_id=>model, :data=>{first_name_field.to_param =>"Justin", last_name_field.to_param => "Coyne"}}, pool_id: not_my_pool, identity_id: identity.short_name
+      post :find_or_create, :node => {:model_id=>model, :data=>{@first_name_field.to_param =>"Justin", @last_name_field.to_param => "Coyne"}}, pool_id: not_my_pool, identity_id: identity.short_name
       expect(response).to respond_forbidden
       expect(assigns[:node]).to be_nil
     end
     it "should return existing node node if one already fits the fields & values specified" do
       previous_number_of_nodes = Node.count
-      post :find_or_create, :node => {:model_id=>model, :data=>{first_name_field.to_param =>"Justin", last_name_field.to_param => "Coyne"}}, pool_id: pool, identity_id: identity.short_name
+      post :find_or_create, :node => {:model_id=>model, :data=>{@first_name_field.to_param =>"Justin", @last_name_field.to_param => "Coyne"}}, pool_id: pool, identity_id: identity.short_name
       Node.count.should == previous_number_of_nodes
       assigns[:node].data.should == @node1.data
       assigns[:node].model.should == model
     end
     it "should create a new node if none fits the fields & values specified" do
       previous_number_of_nodes = Node.count
-      post :find_or_create, :node => {:model_id=>model, :data=>{first_name_field.to_param =>"Randy", last_name_field.to_param => "Reckless"}}, pool_id: pool, identity_id: identity.short_name
+      post :find_or_create, :node => {:model_id=>model, :data=>{@first_name_field.to_param =>"Randy", @last_name_field.to_param => "Reckless"}}, pool_id: pool, identity_id: identity.short_name
       Node.count.should == previous_number_of_nodes + 1
       assigns[:node].data.should == {first_name_field.to_param=>"Randy", last_name_field.to_param=>"Reckless"}
       assigns[:node].model.should == model
     end
     it "should return json" do 
-      post :find_or_create, :node => {:model_id=>model, :data=>{first_name_field.to_param =>"Justin", last_name_field.to_param=>"Ball", title_field.to_param=>"Mr."}}, pool_id: pool, identity_id: identity, :format=>:json
+      post :find_or_create, :node => {:model_id=>model, :data=>{@first_name_field.to_param =>"Justin", @last_name_field.to_param=>"Ball", @title_field.to_param=>"Mr."}}, pool_id: pool, identity_id: identity, :format=>:json
       expect(response).to be_success
       # JSON.parse(response.body).keys.should include('persistent_id', 'model_id', 'url', 'pool', 'identity', 'associations', 'binding')
       model.nodes.first.data.should == {first_name_field.to_param=>"Justin", last_name_field.to_param=>"Ball", title_field.to_param=>"Mr."}
@@ -220,8 +248,9 @@ describe Api::V1::NodesController do
       nodes_before = Node.count
       post :import, :data=>[r1, r2], :model_id=>model, pool_id: pool, identity_id: identity.short_name
       expect(Node.count).to eq(nodes_before + 2)
-      expect(Node.last.data).to eq(r1)
-      expect(Node.find(Node.last.id+1).data).to eq(r2)
+      most_recent_node = Node.order(id: :desc).first
+      expect(most_recent_node.data).to eq(r2)
+      expect(Node.find(most_recent_node.id-1).data).to eq(r1)
     end
   end
 
@@ -286,7 +315,7 @@ describe Api::V1::NodesController do
   def expected_json_for_node(n, format_method=:to_json)
     serialized_node = controller.send(:serialize_node, n)
     if serialized_node["parent_id"]
-      serialized_node["parent_id"] = serialized_node["parent_id"].to_i # Fixes quirk of inconstency in how this field is converted to json
+      serialized_node["parent_id"] = serialized_node["parent_id"].to_i # Fixes quirk of inconsistency in how this field is converted to json
     end
     serialized_node.send(format_method)
   end

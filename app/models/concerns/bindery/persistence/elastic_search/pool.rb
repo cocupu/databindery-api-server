@@ -15,13 +15,18 @@ module Bindery::Persistence::ElasticSearch::Pool
     @adapter ||= Adapter.new(self)
   end
 
+  delegate :search, to:'__elasticsearch__'
+
   # Index-agnostic method name for applying query params based on an identity
-  def apply_query_params_for_identity(identity, query_params={}, user_params={})
-    apply_elasticsearch_params_for_identity(identity, query_params, user_params)
+  def apply_query_params_for_identity(identity, query_builder=Bindery::Persistence::ElasticSearch::Query::QueryBuilder.new, user_params={})
+    apply_elasticsearch_params_for_identity(identity, query_builder, user_params)
   end
 
   # Applies elasticsearch query params based on an identity
-  def apply_elasticsearch_params_for_identity(identity, elasticsearch_params={}, user_params={})
+  def apply_elasticsearch_params_for_identity(identity, query_builder=Bindery::Persistence::ElasticSearch::Query::QueryBuilder.new, user_params={})
+    unless query_builder.instance_of?(Bindery::Persistence::ElasticSearch::Query::QueryBuilder)
+      raise ArgumentError, "query_builder must be an instance of Bindery::Persistence::ElasticSearch::Query::QueryBuilder"
+    end
     # Unless user has explicit read/edit access, apply filters based on audience memberships
     if access_controls.where(identity_id:identity.id).empty?
       filters = []
@@ -29,13 +34,15 @@ module Bindery::Persistence::ElasticSearch::Pool
         filters.concat(audience.filters)
       end
       if filters.empty?
-        SearchFilter.apply_elasticsearch_params_for_filters(default_filters, elasticsearch_params, user_params)
+        # This means the indentity has not been granted any access to any content.  Prevent any documents from being returned.
+        query_builder.filters.must.add_filter(:ids, {values:["NONEXISTENT_ID"]})
       else
-        SearchFilter.apply_elasticsearch_params_for_filters(filters, elasticsearch_params, user_params)
+        SearchFilter.apply_elasticsearch_params_for_filters(filters, query_builder, user_params)
       end
     end
-    return elasticsearch_params, user_params
+    return query_builder, user_params
   end
+
 
   # Provides adapter which implements the methods to call elasticsearch
   class Adapter
@@ -59,6 +66,9 @@ module Bindery::Persistence::ElasticSearch::Pool
       client.indices.delete index: pool.to_param
     end
 
+    alias :create :create_artifacts
+    alias :destroy :destroy_artifacts
+
     # Creates an elasticsearch index
     # Defaults to naming indices {pool.id}_{Time.now.strftime('%Y-%m-%d_%H:%m:%S')}
     # @example Creating an index for pool 1862
@@ -74,6 +84,36 @@ module Bindery::Persistence::ElasticSearch::Pool
     # Sets this pool's elasticsearch alias to point to the index named :index_name
     def set_alias(index_name)
       client.indices.put_alias name: pool.to_param, index: index_name
+    end
+
+    def get
+      client.indices.get index: index_name
+    end
+
+    # Ensures that the query is directed at this pool's index
+    def query_builder(query_params={})
+      case query_params
+        when Bindery::Persistence::ElasticSearch::Query::QueryBuilder
+          query_builder = query_params
+        when Hash
+          query_builder_params = {index:pool.to_param}
+          [:type, :body, :fields].each do |key|
+            if query_params.has_key?(key)
+              query_builder_params[key] = query_params[key]
+            end
+          end
+          query_builder =  Bindery::Persistence::ElasticSearch::Query::QueryBuilder.new(query_builder_params)
+        else
+          raise ArgumentError, "This method only accepts a QueryBuilder or a Hash"
+      end
+      query_builder.index = pool.to_param
+      return query_builder
+    end
+
+    def search(query_params)
+      Rails.logger.debug "[elasticsearch query] #{query_builder(query_params).as_query}"
+      response = client.search query_builder(query_params).as_query
+      return response, response["hits"]["hits"]
     end
 
   end

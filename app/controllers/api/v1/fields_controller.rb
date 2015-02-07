@@ -1,5 +1,8 @@
 class Api::V1::FieldsController < ApplicationController
-
+  include Bindery::Persistence::ElasticSearch::Consumer
+  include Bindery::AppliesPerspectives
+  skip_before_filter :set_perspective, :only => :index # Remove the default before_filter that's added by AppliesPerspectives
+  before_filter :set_perspective, :only => :search
   load_and_authorize_resource :model, only:[:create]
 
   before_filter :load_pool
@@ -9,6 +12,8 @@ class Api::V1::FieldsController < ApplicationController
   include Blacklight::SolrHelper
   solr_search_params_logic << :add_pool_to_fq
   before_filter :load_configuration, only: :show
+
+  self.query_logic << :apply_audience_filters
 
 
   def index
@@ -23,7 +28,7 @@ class Api::V1::FieldsController < ApplicationController
   def show
     authorize! :edit, @pool
     all_fields = @pool.all_fields
-    @field = all_fields.select {|f| f["code"] == params[:id]}.first
+    @field = all_fields.select {|f| f.code == params[:id]}.first
 
     extra_controller_params = {}
     field_code = params[:id]
@@ -35,10 +40,15 @@ class Api::V1::FieldsController < ApplicationController
     solr_response = query_solr(params, extra_controller_params)
     values_info = {"numDocs"=>solr_response["response"]["numFound"],"values"=>hashify_facet_counts(solr_response["facet_counts"]["facet_fields"][field_field_name_for_index])}
 
-    respond_to do |format|
-      format.html { redirect_to identity_pool_search_path(@identity.short_name, @pool.short_name) }
-      format.json { render :json=>@field.as_json.merge(values_info) }
-    end
+    field_code = params[:id]
+    qb = query_builder  # This gets the query_builder with all query_logic applied
+    qb.aggregations.add_facet(field_code)
+    qb.set_query('match_all', {})
+    query_builder.size = 0
+
+    (@response, @document_list) = @pool.search(qb)
+    values_info = {"numDocs"=>@response["hits"]["total"],"values"=>@response["aggregations"][field_code]["buckets"]}
+    render :json=>@field.as_json.merge(values_info)
   end
 
   def create

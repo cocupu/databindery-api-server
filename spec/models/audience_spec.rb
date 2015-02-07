@@ -12,8 +12,9 @@ describe Audience do
   end
   it "should render query params based on filters" do
     subject.update_attributes filters_attributes:[{field:subject_field, operator:"+", values:["foo","bar"]}, {filter_type:"RESTRICT", field:field2, operator:"-", values:["baz"]}]
-    query_params, user_params = subject.apply_query_params({}, {})
-    query_params.should == {:fq=>["-field2:\"baz\"", "subject:\"foo\" OR subject:\"bar\""]}
+    query_builder = Bindery::Persistence::ElasticSearch::Query::QueryBuilder.new
+    query_builder, user_params = subject.apply_query_params(query_builder, {})
+    expect(query_builder.as_json['body']['query']['filtered']['filter']).to eq({bool:{should:[{query:{match:{subject:"foo"}}},{query:{match:{subject:"bar"}}}],must_not:[{query:{match:{field2:"baz"}}}]}}.as_json)
   end
   it "should render solr params based on filters" do
     pending "Solr-specific"

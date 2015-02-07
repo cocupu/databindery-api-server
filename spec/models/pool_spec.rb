@@ -158,11 +158,10 @@ describe Pool do
       end
     end
     describe "apply_query_params_for_identity" do
-      it "should aggregate solr_params from all applicable audiences" do
-        @aud1.update_attributes filters_attributes:[{field:subject_field, operator:"+", values:["foo","bar"]}]
-        @aud3.update_attributes filters_attributes:[{field:location_field, filter_type:"RESTRICT", operator:"-", values:["baz"]}]
-        query_params, user_params = subject.apply_query_params_for_identity(@identity, {}, {})
-        expect(query_params).to eq ( {fq: ["-location:\"baz\"", "subject:\"foo\" OR subject:\"bar\""]} )
+      it "aliases to apply_elasticsearch_params_for_identity" do
+        query_builder = Bindery::Persistence::ElasticSearch::Query::QueryBuilder.new
+        expect(subject).to receive(:apply_elasticsearch_params_for_identity).with(@identity, query_builder, {})
+        subject.apply_query_params_for_identity(@identity, query_builder, {})
       end
     end
   end

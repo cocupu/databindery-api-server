@@ -4,9 +4,9 @@ module Bindery::Persistence::ElasticSearch::Node
   included do
     # Schedule a job to create the elasticsearch type
     # Only trigger on create because "updates"
-    after_create { NodeIndexer.perform_async(self.persistent_id, index: self.pool.to_param, type:self.model.to_param, body:self.as_elasticsearch) }
+    after_create { NodeIndexer.perform_async(self.id) }
     # Schedule a job to destroy associated elasticsearch artifacts
-    after_destroy { NodeDestroyer.perform_async(self.persistent_id, index: self.pool.to_param, type:self.model.to_param) }
+    after_destroy { NodeDestroyer.perform_async(persistent_id, pool_id, model_id) }
   end
 
   module ClassMethods
@@ -31,6 +31,11 @@ module Bindery::Persistence::ElasticSearch::Node
       return prefix + normalized_field_name
     end
 
+  end
+
+  # Returns the appropriate elasticsearch adapter for this Class
+  def __elasticsearch__
+    @adapter ||= Adapter.new(self)
   end
 
   # Index-agnostic method for rendering the node as a document to be indexed.
@@ -78,20 +83,42 @@ module Bindery::Persistence::ElasticSearch::Node
     doc
   end
 
+  # Provides adapter which implements the methods to call elasticsearch
+  class Adapter
+    include Bindery::Persistence::ElasticSearch::Common
+
+    attr_accessor :node
+    def initialize(node)
+      @node = node
+    end
+
+    # Gets the elasticsearch document
+    # Accepts all of the optional parameters for Elasticsearch::API::Actions.get
+    def get(options={})
+      args = options.merge(index:node.pool_id, type:node.model_id, id:node.persistent_id)
+      client.get args
+    end
+
+    # Creates/Updates an elasticsearch document for this node
+    def save
+      Bindery::Persistence::ElasticSearch.client.index(id: node.persistent_id, index: node.pool_id, type:node.model_id, body:node.as_elasticsearch )
+    end
+
+    # Destroys the elasticsearch document
+    def destroy
+      Bindery::Persistence::ElasticSearch.client.delete(id: node.persistent_id, index: node.pool_id, type:node.model_id )
+    end
+
+  end
+
+
   class NodeIndexer
     include Sidekiq::Worker
 
     # Indexes a single node
-    # If index, type, and document body are all provided in the options {index: 'myindex', type: 'mytype', body: {...}} they will be used
-    # If all of these are not provided, the node will be loaded from the database and values will be generated from the loaded node.
-    def perform(node_persistent_id, options={})
-      if options.has_key?("index") && options.has_key?("type") && options.has_key?("body")
-        args = {id: node_persistent_id, index: options["index"], type:options["type"], body:options['body'] }
-      else
-        node = ::Node.latest_version(node_persistent_id)
-        args = {id: node_persistent_id, index: node.pool_id, type:node.model_id, body:node.as_elasticsearch }
-      end
-      Bindery::Persistence::ElasticSearch.client.index(args)
+    def perform(node_version_id)
+      node = Node.find(node_version_id)
+      node.__elasticsearch__.save
     end
   end
 
@@ -99,15 +126,11 @@ module Bindery::Persistence::ElasticSearch::Node
     include Sidekiq::Worker
 
     # Deletes a single node
-    # If index and type are both provided in the options {index: 'myindex', type: 'mytype'} they will be used
-    # If both of these are not provided, the node will be loaded from the database and values will be generated from the loaded node.
-    def perform(node_persistent_id, options={})
-      if options.has_key?("index") && options.has_key?("type")
-        args = {id: node_persistent_id, index: options["index"], type:options["type"] }
-      else
-        raise ArgumentError, "Can't remove document from elasticsearch without knowing the index and type. You provided #{options}"
-      end
-      Bindery::Persistence::ElasticSearch.client.delete args
+    # Because the actual node has usually been deleted before this is run,
+    # you must provide the pool_id and model_id (which are used to find the corresponding index and type in elasticsearch)
+    def perform(node_persistent_id, pool_id, model_id)
+      node = Node.new(persistent_id:node_persistent_id, pool_id:pool_id, model_id:model_id)
+      node.__elasticsearch__.destroy
     end
   end
 end

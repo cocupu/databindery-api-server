@@ -3,47 +3,49 @@ module Bindery::Persistence::ElasticSearch::SearchFilter
 
   module ClassMethods
 
-    def apply_query_params_for_filters(filters, query_parameters, user_parameters)
-      apply_elasticsearch_params_for_filters(filters, query_parameters, user_parameters)
+    def apply_query_params_for_filters(filters, query_builder, user_parameters)
+      apply_elasticsearch_params_for_filters(filters, query_builder, user_parameters)
     end
 
-    def apply_elasticsearch_params_for_filters(filters, elasticsearch_parameters, user_parameters)
-      unless filters.empty?
-        elasticsearch_parameters[:fq] ||= []
-        grant_filter_elasticsearch_params = {:fq=>[]}
-        filters.each do |filter|
-          if filter.filter_type == "GRANT"
-            filter.apply_elasticsearch_params(grant_filter_elasticsearch_params, user_parameters)
-          else
-            filter.apply_elasticsearch_params(elasticsearch_parameters, user_parameters)
-          end
-        end
-        unless grant_filter_elasticsearch_params[:fq].empty?
-          elasticsearch_parameters[:fq] <<  grant_filter_elasticsearch_params[:fq].join(" OR ")
-        end
+    def apply_elasticsearch_params_for_filters(filters, query_builder=Bindery::Persistence::ElasticSearch::Query::QueryBuilder.new, user_parameters={})
+      filters.each do |filter|
+        filter.apply_elasticsearch_params(query_builder, user_parameters)
       end
-      return elasticsearch_parameters, user_parameters
+      return query_builder, user_parameters
     end
   end
 
-  def apply_query_params(elasticsearch_parameters, user_parameters)
-    apply_elasticsearch_params(elasticsearch_parameters, user_parameters)
+  def apply_query_params(query_builder, user_parameters)
+    apply_elasticsearch_params(query_builder, user_parameters)
   end
 
-  def apply_elasticsearch_params(elasticsearch_parameters, user_parameters)
-    elasticsearch_parameters[:fq] ||= []
+  def apply_elasticsearch_params(query_builder=Bindery::Persistence::ElasticSearch::Query::QueryBuilder.new,user_parameters={})
+    unless query_builder.instance_of?(Bindery::Persistence::ElasticSearch::Query::QueryBuilder)
+      raise ArgumentError, "query_builder must be an instance of Bindery::Persistence::ElasticSearch::Query::QueryBuilder"
+    end
+    # query_builder[:fq] ||= []
     if filter_type == "GRANT"
-      elasticsearch_parameters[:fq] << values.map {|v| "#{Node.field_name_for_elasticsearch(field)}:#{quoted_query_value(v)}" }.join(" OR ")
+      values.each do |value|
+        query_builder.filters.add_should_match({field.code => value}, context: :filter )
+      end
     else  # filter_type == "RESTRICT"
-      if values.length > 1
-        query = values.map {|v| "#{Node.field_name_for_elasticsearch(field)}:#{quoted_query_value(v)}" }.join(" OR ")
-        elasticsearch_parameters[:fq] << "#{operator}(#{query})"
+      if operator == "-"
+        values.each do |value|
+          query_builder.filters.add_must_not_match({field.code => value}, context: :filter )
+        end
       else
-        v = values.first
-        elasticsearch_parameters[:fq] << "#{operator}#{Node.field_name_for_elasticsearch(field)}:#{quoted_query_value(v)}"
+        if values.length > 1
+          or_filter = query_builder.filters.must.add_filter(:or)
+          values.each do |value|
+            or_filter.add_filter(:query).add_filter(:match,{field.code => value})
+          end
+        else
+          v = values.first
+          query_builder.filters.add_must_match({field.code => v}, context: :filter)
+        end
       end
     end
-    elasticsearch_parameters
+    return query_builder,user_parameters
   end
 
   def quoted_query_value(value)

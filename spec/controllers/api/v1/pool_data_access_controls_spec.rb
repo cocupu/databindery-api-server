@@ -1,28 +1,41 @@
 require 'rails_helper'
 
-describe Api::V1::PoolDataController do
-  let(:identity) { FactoryGirl.create :identity }
-  let(:pool) { FactoryGirl.create :pool, owner:identity }
-
-  let(:access_level_field) {FactoryGirl.create(:access_level_field)}
-  let(:location_field) {FactoryGirl.create(:location_field)}
-  let(:full_name_field) {FactoryGirl.create(:full_name_field)}
-  let(:subject_field) {FactoryGirl.create(:subject_field)}
-
-  let(:model1) { FactoryGirl.create(:model, pool:pool, name:"Things", fields:[full_name_field, location_field]) }
-  let(:model2) { FactoryGirl.create(:model, pool:pool, name:"Restricted Things", fields:[access_level_field, subject_field]) }
-
+describe Api::V1::PoolDataController, sidekiq: :inline, elasticsearch:true do
     
-  before do
-    pool.audience_categories.build.save
-    @node_kittens = FactoryGirl.create(:node, pool:pool, model:model1, data:{full_name_field.to_param=>"Kittens", location_field.to_param=>"Albuquerque"})
-    @node_puppies = FactoryGirl.create(:node, pool:pool, model:model1, data:{full_name_field.to_param=>"Puppies", location_field.to_param=>"Albuquerque"})
-    @node_pandas = FactoryGirl.create(:node, pool:pool, model:model1, data:{full_name_field.to_param=>"Pandas", location_field.to_param=>"Yunan"})
-    @node_ordinary1 = FactoryGirl.create(:node, pool:pool, model:model2, data:{access_level_field.to_param=>"ordinary", subject_field.to_param=>"Ordinary 1"})
-    @node_ordinary2 = FactoryGirl.create(:node, pool:pool, model:model2, data:{access_level_field.to_param=>"ordinary", subject_field.to_param=>"Ordinary 2"})
-    @node_special = FactoryGirl.create(:node, pool:pool, model:model2, data:{access_level_field.to_param=>"special", subject_field.to_param=>"Special"})
-    @node_extra_special = FactoryGirl.create(:node, pool:pool, model:model2, data:{access_level_field.to_param=>"extra_special", subject_field.to_param=>"Extra Special"})
+  before(:all) do
+    Sidekiq::Testing.inline! # Ensure that node Indexers are run in this before(:all) block
+    @identity = FactoryGirl.create :identity
+    @pool =  FactoryGirl.create :pool, owner:@identity
+    @access_level_field = FactoryGirl.create(:access_level_field)
+    @location_field = FactoryGirl.create(:location_field)
+    @full_name_field = FactoryGirl.create(:full_name_field)
+    @subject_field = FactoryGirl.create(:subject_field)
+
+    @model1 =  FactoryGirl.create(:model, pool:@pool, name:"Things", fields:[@full_name_field, @location_field])
+    @model2 =  FactoryGirl.create(:model, pool:@pool, name:"Restricted Things", fields:[@access_level_field, @subject_field])
+
+    @pool.audience_categories.build.save
+    @node_kittens = FactoryGirl.create(:node, pool:@pool, model:@model1, data:{@full_name_field.to_param=>"Kittens", @location_field.to_param=>"Albuquerque"})
+    @node_puppies = FactoryGirl.create(:node, pool:@pool, model:@model1, data:{@full_name_field.to_param=>"Puppies", @location_field.to_param=>"Albuquerque"})
+    @node_pandas = FactoryGirl.create(:node, pool:@pool, model:@model1, data:{@full_name_field.to_param=>"Pandas", @location_field.to_param=>"Yunan"})
+    @node_ordinary1 = FactoryGirl.create(:node, pool:@pool, model:@model2, data:{@access_level_field.to_param=>"ordinary", @subject_field.to_param=>"Ordinary 1"})
+    @node_ordinary2 = FactoryGirl.create(:node, pool:@pool, model:@model2, data:{@access_level_field.to_param=>"ordinary", @subject_field.to_param=>"Ordinary 2"})
+    @node_special = FactoryGirl.create(:node, pool:@pool, model:@model2, data:{@access_level_field.to_param=>"special", @subject_field.to_param=>"Special"})
+    @node_extra_special = FactoryGirl.create(:node, pool:@pool, model:@model2, data:{@access_level_field.to_param=>"extra_special", @subject_field.to_param=>"Extra Special"})
+    sleep 1
   end
+
+  let(:identity) {@identity}
+  let(:pool) {@pool}
+  let(:access_level_field) {@access_level_field}
+  let(:location_field) {@location_field }
+  let(:full_name_field) {@full_name_field}
+  let(:subject_field) {@subject_field}
+
+  let(:model1) { @model1 }
+  let(:model2) { @model2 }
+
+
   before(:each) do
     @identity = FactoryGirl.create :identity
     sign_in @identity.login_credential
@@ -73,6 +86,10 @@ describe Api::V1::PoolDataController do
     end
     it "I should not see anything" do
       get :index, pool_id: pool, identity_id: identity.short_name
+      assigns[:document_list].count.should == 0
+    end
+    it "I should not see anything even if additional filters are applied" do
+      get :index, pool_id: pool, identity_id: identity.short_name, f:{Node.field_name_for_index("full_name", type: "facet") => "Kittens"}
       assigns[:document_list].count.should == 0
     end
   end

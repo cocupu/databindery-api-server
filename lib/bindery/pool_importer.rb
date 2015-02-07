@@ -95,9 +95,11 @@ module Bindery
       import_results = []
       models_by_uri.each_pair do |uri,model|
         nodes_by_model.fetch(uri,[]).each do |entry|
-          converted_data << model.convert_data_field_codes_to_id_strings(entry)
+          # This was used when node.data used field id strings as keys
+          # converted_data << model.convert_data_field_codes_to_id_strings(entry)
+          converted_data << entry
         end
-        import_results << ::Node.bulk_import_records(converted_data, pool, model)
+        import_results << ::Node.bulk_import_data(converted_data, pool, model)
         converted_data = []
       end
       return import_results

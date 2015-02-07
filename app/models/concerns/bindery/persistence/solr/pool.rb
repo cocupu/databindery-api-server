@@ -1,7 +1,8 @@
 module Bindery::Persistence::Solr::Pool
   extend ActiveSupport::Concern
 
-  def apply_query_params_for_identity(identity, solr_params={}, user_params={})
+  def apply_query_params_for_identity(identity, user_params={},solr_params={})
+    # Note: Blacklight's apply_solr_params methods switch the order of solr_params and user_params
     apply_solr_params_for_identity(identity, solr_params, user_params)
   end
 
@@ -19,6 +20,11 @@ module Bindery::Persistence::Solr::Pool
       end
     end
     return solr_params, user_params
+  end
+
+  # This filters out everything by default!
+  def default_filters
+    return [SearchFilter.new(operator:"-", filter_type:"RESTRICT", field:Field.new(code:"*"), values:["*"])]
   end
 
 end

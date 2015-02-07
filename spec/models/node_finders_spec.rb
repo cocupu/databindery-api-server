@@ -85,7 +85,7 @@ describe Node do
         subject.find_association("foo").should be_nil
       end
     end
-    describe "incoming" do
+    describe "incoming", elasticsearch:true, sidekiq: :inline do
       it "should return all of the nodes pointing to the current object" do
         @author1.incoming.should == [subject]
       end

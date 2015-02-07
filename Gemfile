@@ -44,6 +44,7 @@ gem 'roo', "~> 1.12.2"
 # Misc
 gem 'uuid'
 gem 'jbuilder'
+gem 'jsonify'
 
 # Development & Testing
 gem 'spring', :group => :development

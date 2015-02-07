@@ -33,19 +33,12 @@ module Bindery
     @solr_config
   end
 
-  # Documents is a single solr document or array of solr documents
-  def self.index(documents)
-    documents = Array.wrap(documents)
-    documents.each do |doc|
-      solr.add doc
-    end
-    Bindery.solr.commit
-  end
 
   def self.clear_index
-    raw_results = Bindery.solr.get 'select', :params => {:q => '{!lucene}*:*', :fl=>'id', :qt=>'document', :rows=>2000}
-    Bindery.solr.delete_by_id raw_results["response"]["docs"].map{ |d| d["id"]}
-    Bindery.solr.commit
+    Rails.logger.warn "clear_index does not do anything!"
+    # raw_results = Bindery.solr.get 'select', :params => {:q => '{!lucene}*:*', :fl=>'id', :qt=>'document', :rows=>2000}
+    # Bindery.solr.delete_by_id raw_results["response"]["docs"].map{ |d| d["id"]}
+    # Bindery.solr.commit
   end
 end
 

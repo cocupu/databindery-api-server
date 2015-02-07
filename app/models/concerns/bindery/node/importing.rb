@@ -2,7 +2,7 @@ module Bindery::Node::Importing
   extend ActiveSupport::Concern
 
   module ClassMethods
-    def bulk_import_records(records, pool, model)
+    def bulk_import_data(records, pool, model)
       nodes = records.map do |record|
         node = Node.new(pool:pool, model:model, data:record)
         node.generate_uuid
@@ -13,8 +13,7 @@ module Bindery::Node::Importing
 
     def import_nodes(nodes)
       result = self.import(nodes)
-      Bindery.index( nodes.map {|n| n.as_index_document} )
-      Bindery.solr.commit
+      Bindery::Persistence::ElasticSearch.add_documents_to_index( nodes.map {|n| n.as_index_document} )
       result
     end
   end

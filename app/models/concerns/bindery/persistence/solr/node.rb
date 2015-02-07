@@ -73,7 +73,7 @@ module Bindery::Persistence::Solr::Node
   end
 
   def update_index
-    Bindery.index(self.as_index_document)
+    Bindery::Persistence::Solr.add_documents_to_index(self.as_index_document)
     Bindery.solr.commit
   end
 

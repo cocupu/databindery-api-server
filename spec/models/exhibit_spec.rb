@@ -1,15 +1,21 @@
 require 'rails_helper'
 
 describe Exhibit do
-  before do
-    @identity = FactoryGirl.create :identity
-  end
+  let(:pool) { FactoryGirl.create :pool }
   it "Should have many facets" do
-    subject.pool = FactoryGirl.create :pool
+    subject.pool = pool
     subject.facets = ["Age", "Weight", "Marital status"]
     subject.save!
     subject.reload
-    subject.facets.should == ["Age", "Weight", "Marital status"]
+    expect(subject.facets).to eq ["Age", "Weight", "Marital status"]
+  end
+
+  it "Should have many index_fields" do
+    subject.pool = pool
+    subject.index_fields = ["subject", "first_name", "last_name"]
+    subject.save!
+    subject.reload
+    expect(subject.index_fields).to eq ["subject", "first_name", "last_name"]
   end
 
   it "should accept_nested_attributes for filters" do
@@ -24,13 +30,14 @@ describe Exhibit do
   end
 
   describe "filtering: "  do
-    it "should apply filters to solr params logic" do
+    it "should apply filters to query builder" do
       subject.filters << SearchFilter.new(:field=>FactoryGirl.create(:model_field), :operator=>"+", :values=>["1","49"])
       subject.filters << SearchFilter.new(:field=>FactoryGirl.create(:access_level_field), :operator=>"+", :values=>["public"])
       subject.filters << SearchFilter.new(:filter_type=>"RESTRICT", :field=>FactoryGirl.create(:model_name_field), :operator=>"-", :values=>["song","person"])
       subject.filters << SearchFilter.new(:filter_type=>"RESTRICT", :field=>FactoryGirl.create(:location_field), :operator=>"-", :values=>["disk1"])
-      query_params, user_params = subject.apply_query_params_logic({}, {})
-      expect(query_params).to eq ( {fq: ['-(_bindery_model_name:"song" OR _bindery_model_name:"person")', '-location:"disk1"', '_bindery_model:"1" OR _bindery_model:"49" OR access_level:"public"']} )
+      query_builder = Bindery::Persistence::ElasticSearch::Query::QueryBuilder.new
+      query_builder, user_params = subject.apply_query_params_logic(query_builder, {})
+      expect(query_builder.as_json['body']['query']['filtered']['filter']).to eq({bool:{should:[{query:{match:{_bindery_model:"1"}}},{query:{match:{_bindery_model:"49"}}},{query:{match:{access_level:"public"}}}],must_not:[{query:{match:{_bindery_model_name:"song"}}},{query:{match:{_bindery_model_name:"person"}}},{query:{match:{location:"disk1"}}}]}}.as_json)
     end
   end
 

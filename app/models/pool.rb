@@ -47,11 +47,6 @@ class Pool < ActiveRecord::Base
     audience_categories.each {|ac| audiences.concat ac.audiences_for_identity(identity) }
     audiences
   end
-
-  # This filters out everything by default!
-  def default_filters
-    return [SearchFilter.new(operator:"-", filter_type:"RESTRICT", field:Field.new(code:"*"), values:["*"])]
-  end
   
   def perspectives
     exhibits.unshift(generated_default_perspective)
@@ -141,9 +136,13 @@ class Pool < ActiveRecord::Base
   end
 
   def delete_bucket
-    if bucket.exists?
-      bucket.clear!
-      bucket.delete
+    begin
+      if bucket.exists?
+        bucket.clear!
+        bucket.delete
+      end
+    rescue SocketError => e
+      logger.warn("Could not delete bucket associated with Pool #{id}.  Looks like the connection to AWS failed? #{e.message}")
     end
   end
 

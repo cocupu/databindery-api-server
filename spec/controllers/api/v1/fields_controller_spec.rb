@@ -83,8 +83,12 @@ describe Api::V1::FieldsController do
     end
   end
 
-  describe "show" do
-    before do
+  describe "show" , sidekiq: :inline, elasticsearch:true do
+    before(:all) do
+      Sidekiq::Testing.inline! # Ensure that node Indexers are run in this before(:all) block
+      @pool = FactoryGirl.create :pool
+      @identity = @pool.owner
+      @my_model = FactoryGirl.create(:model, pool: @pool)
       @field = Field.create(:code=>'title', :name=>'Title', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
       @my_model.fields << @field
       @my_model.save
@@ -110,12 +114,15 @@ describe Api::V1::FieldsController do
         sign_in @identity.login_credential
       end
       it "should return field info and current values from pool" do
+        @my_model.fields << @field  # For some reason this needs to be repeated within the example.
+        @my_model.save
         FactoryGirl.create(:node, pool:@pool, model:@my_model, data:{@field.to_param=>"My title"})
+        sleep 1 # Wait for the node to populate in the elasticsearch index
         get :show, identity_id: @identity.short_name, :pool_id=>@pool.id, id:@field.code, format: :json
         expect(response).to be_successful
         assigns[:field].should == @field
         json = JSON.parse(response.body)
-        json.should == JSON.parse(@field.as_json.merge("numDocs"=>1, "values"=>[{"value"=>"My title", "count"=>1}]).to_json)
+        json.should == JSON.parse(@field.as_json.merge("numDocs"=>1, "values"=>[{"key"=>"My title", "doc_count"=>1}]).to_json)
       end
     end
   end
