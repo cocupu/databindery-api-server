@@ -28,6 +28,7 @@ open http://localhost:3000/api-docs
 ```
 
 ## Run the Server
+To run the server locally (assuming you have elasticsearch installed)
 ```
 elasticsearch --config=./elasticsearch-dev.yml
 bundle exec sidekiq
