@@ -27,7 +27,7 @@ describe Api::V1::PoolsController do
       it "should return json" do
         get :index, identity_id: @identity.short_name, format: :json
         expect(response).to  be_successful
-        expect(JSON.parse(response.body)).to eq [{"short_name"=>@my_pool.short_name, "name"=>@my_pool.name, "description"=>nil, "identity"=>@identity.short_name, "url"=>"/api/v1/pools/#{@my_pool.id}"}]
+        expect(JSON.parse(response.body)).to eq [{"id"=>@my_pool.id,"short_name"=>@my_pool.short_name, "name"=>@my_pool.name, "description"=>nil, "identity"=>@identity.short_name, "url"=>"/api/v1/pools/#{@my_pool.id}"}]
       end
       it "should allow searching by identity short name" do
         get :index, identity_id: @identity.short_name
