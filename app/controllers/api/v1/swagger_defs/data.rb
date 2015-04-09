@@ -23,5 +23,16 @@ module Api::V1::SwaggerDefs::Data
       response :not_acceptable, "The request you made is not acceptable"
       # response :requested_range_not_satisfiable
     end
+
+    swagger_api :overview do
+      summary "Provides a pool overview with models, perspectives and aggregations/facets"
+      # notes ""
+      param :path, :pool_id, :string, :required, "Pool ID"
+
+      response :unauthorized
+      response :not_acceptable, "The request you made is not acceptable"
+      # response :requested_range_not_satisfiable
+    end
+
   end
 end

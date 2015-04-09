@@ -27,27 +27,15 @@ class Api::V1::FieldsController < ApplicationController
 
   def show
     authorize! :edit, @pool
-    all_fields = @pool.all_fields
-    @field = all_fields.select {|f| f.code == params[:id]}.first
+    @field = Field.find(params[:id])
 
-    extra_controller_params = {}
-    field_code = params[:id]
-    field_field_name_for_index = Node.field_name_for_index(field_code, type: "facet")
-    extra_controller_params[:fq] = "#{field_field_name_for_index}:[* TO *]"
-    extra_controller_params["facet.field"] = field_field_name_for_index
-    extra_controller_params[:rows] = 0
-
-    solr_response = query_solr(params, extra_controller_params)
-    values_info = {"numDocs"=>solr_response["response"]["numFound"],"values"=>hashify_facet_counts(solr_response["facet_counts"]["facet_fields"][field_field_name_for_index])}
-
-    field_code = params[:id]
     qb = query_builder  # This gets the query_builder with all query_logic applied
-    qb.aggregations.add_facet(field_code)
+    qb.aggregations.add_facet(@field.code)
     qb.set_query('match_all', {})
     query_builder.size = 0
 
     (@response, @document_list) = @pool.search(qb)
-    values_info = {"numDocs"=>@response["hits"]["total"],"values"=>@response["aggregations"][field_code]["buckets"]}
+    values_info = {"numDocs"=>@response["hits"]["total"],"values"=>@response["aggregations"][@field.code]["buckets"]}
     render :json=>@field.as_json.merge(values_info)
   end
 

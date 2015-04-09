@@ -68,7 +68,7 @@ class ModelsController < ApplicationController
 
   def serialize_model(m)
     json = {id: m.id, url: api_v1_model_path(m), association_fields: m.association_fields, fields: m.fields, name: m.name, label_field_id: m.label_field_id.to_s, allow_file_bindings: m.allow_file_bindings }
-    json.merge!(pool: m.pool.short_name, identity: m.pool.owner.short_name) if m.pool
+    json.merge!(pool_id: m.pool_id) if m.pool_id
     json
   end
 

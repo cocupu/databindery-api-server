@@ -1,6 +1,9 @@
-module Bindery::Persistence::S3
+module Bindery::Persistence::AWS::S3
+  extend ActiveSupport::Autoload
+  # autoload :Bucket
+
   def self.default_connection
-    @conn ||= S3Connection.new(:access_key_id => AWS.config.access_key_id,
+    @conn ||= Bindery::Persistence::AWS::S3::Connection.new(:access_key_id => AWS.config.access_key_id,
                             :secret_access_key => AWS.config.secret_access_key)
   end
   

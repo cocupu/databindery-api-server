@@ -2,6 +2,7 @@ require 'rails_helper'
 
 describe Api::V1::AudienceCategoriesController do
   before do
+    stub_elasticsearch
     @identity = FactoryGirl.create :identity
     @another_identity = FactoryGirl.create(:identity)
     @pool = FactoryGirl.create :pool, :owner=>@identity

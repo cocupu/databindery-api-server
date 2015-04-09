@@ -5,11 +5,11 @@ describe Api::V1::PoolDataController do
   let(:my_pool) { FactoryGirl.create :pool, owner:identity }
   let(:other_pool) { FactoryGirl.create :pool, owner:identity }
   let(:not_my_pool) { FactoryGirl.create :pool, owner:FactoryGirl.create(:identity) }
+  let(:subject_field) { FactoryGirl.create(:subject_field) }
+  let(:first_name_field) { FactoryGirl.create(:first_name_field) }
   let(:my_model) { FactoryGirl.create(:model, pool:my_pool) }
   let(:my_model_different_pool) { FactoryGirl.create(:model, pool: other_pool) }
   #let(:not_my_model) { FactoryGirl.create(:model) }
-  let(:subject_field) { FactoryGirl.create(:subject_field) }
-  let(:first_name_field) { FactoryGirl.create(:first_name_field) }
   let(:exhibit_with_filters) { FactoryGirl.create(:exhibit, pool: my_pool, index_fields:[subject_field, first_name_field], facets:[subject_field,first_name_field] ,filters_attributes: [field:subject_field, operator:"+", values:["test", "barf"]]) }
 
   describe "index" do
@@ -92,7 +92,6 @@ describe Api::V1::PoolDataController do
         # expect(json["responseHeader"]["params"].keys).to include{"facet"}
         # expect(json["responseHeader"]["params"].keys).to include{"rows"}
         expect(json["hits"]["total"]).to eq 4
-        puts json["hits"]["hits"].first
         expect(json["hits"]["hits"].first["_index"]).to include(automotives_pool.to_param)
         pids = json["hits"]["hits"].map {|doc| doc["_id"]}  # Note: these are elasticsearch documents, so the id is in "_id", not "id"
         [@node1, @node2, @node3, @node4].each {|n| pids.should include(n.persistent_id)}
@@ -187,49 +186,53 @@ describe Api::V1::PoolDataController do
     end
   end
   
-  # describe "overview" do
-  #   describe "when not logged on" do
-  #     it "should require authentication" do
-  #       get :overview, pool_id: my_pool
-  #       expect(response).to respond_unauthorized
-  #     end
-  #   end
-  #   describe "when logged on" do
-  #     before do
-  #       sign_in identity.login_credential
-  #       my_model = FactoryGirl.create(:model, pool:my_pool)
-  #       my_model_different_pool = FactoryGirl.create(:model, pool: other_pool)
-  #       @not_my_model = FactoryGirl.create(:model)
-  #     end
-  #     describe "requesting a pool I don't own" do
-  #       it "should forbid access" do
-  #         get :overview, :pool_id=>not_my_pool
-  #         expect(response).to respond_forbidden
-  #       end
-  #     end
-  #     describe "requesting a pool I own" do
-  #       it "should be successful" do
-  #         get :overview, :pool_id=>my_pool, :format=>:json
-  #         expect(response).to be_success
-  #       end
-  #     end
-  #     describe "requesting a pool I can edit" do
-  #       before do
-  #         @other_identity = FactoryGirl.create(:identity)
-  #         AccessControl.create!(:pool=>my_pool, :identity=>@other_identity, :access=>'EDIT')
-  #       end
-  #       it "should be successful when rendering json" do
-  #         get :overview, :pool_id=>my_pool, :format=>:json
-  #         expect(response).to  be_successful
-  #         json = JSON.parse(response.body)
-  #         json['id'].should == my_pool.id
-  #         json['models'].should == JSON.parse(my_pool.models.to_json)
-  #         json['perspectives'].should == my_pool.exhibits.as_json
-  #         json['facets'].should == {"model_name"=>[], "description_ssi"=>[]}
-  #         json["numFound"].should == 0
-  #       end
-  #     end
-  #   end
-  # end
+  describe "overview" do
+    describe "when not logged on" do
+      it "should require authentication" do
+        get :overview, pool_id: my_pool
+        expect(response).to respond_unauthorized
+      end
+    end
+    describe "when logged on" do
+      before do
+        sign_in identity.login_credential
+        my_model = FactoryGirl.create(:model, pool:my_pool)
+        my_model_different_pool = FactoryGirl.create(:model, pool: other_pool)
+        @not_my_model = FactoryGirl.create(:model)
+      end
+      describe "requesting a pool I don't own" do
+        it "should forbid access" do
+          get :overview, :pool_id=>not_my_pool
+          expect(response).to respond_forbidden
+        end
+      end
+      describe "requesting a pool I own" do
+        it "should be successful" do
+          get :overview, :pool_id=>my_pool, :format=>:json
+          expect(response).to be_success
+        end
+      end
+      describe "requesting a pool I can edit", elasticsearch:true do
+        before do
+          my_model.fields = [subject_field,first_name_field]
+          my_model.save
+          @node = FactoryGirl.create(:node, pool:my_pool,model:my_model, data:{"subject"=>"My Subject", "first_name"=>"First Name"})
+          @other_identity = FactoryGirl.create(:identity)
+          AccessControl.create!(:pool=>my_pool, :identity=>@other_identity, :access=>'EDIT')
+        end
+        it "should be successful when rendering json" do
+          get :overview, :pool_id=>my_pool, :format=>:json
+          expect(response).to  be_successful
+          json = JSON.parse(response.body)
+          json['id'].should == my_pool.id
+          json['models'].should == JSON.parse(my_pool.models.to_json)
+          json['perspectives'].should == my_pool.exhibits.as_json
+          expect(json['aggregations'].keys).to include("subject")
+          expect(json['aggregations'].keys).to include("first_name")
+          json["numFound"].should == 0
+        end
+      end
+    end
+  end
   
 end

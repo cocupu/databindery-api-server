@@ -118,11 +118,12 @@ describe Api::V1::FieldsController do
         @my_model.save
         FactoryGirl.create(:node, pool:@pool, model:@my_model, data:{@field.to_param=>"My title"})
         sleep 1 # Wait for the node to populate in the elasticsearch index
-        get :show, identity_id: @identity.short_name, :pool_id=>@pool.id, id:@field.code, format: :json
+        get :show, identity_id: @identity.short_name, :pool_id=>@pool.id, id:@field.id, format: :json
         expect(response).to be_successful
         assigns[:field].should == @field
         json = JSON.parse(response.body)
-        json.should == JSON.parse(@field.as_json.merge("numDocs"=>1, "values"=>[{"key"=>"My title", "doc_count"=>1}]).to_json)
+        # json.should == JSON.parse(@field.as_json.merge("numDocs"=>1, "values"=>[{"key"=>"My title", "doc_count"=>1}]).to_json)
+        json.should == JSON.parse(@field.as_json.merge("numDocs"=>1, "values"=>[{"key"=>"my", "doc_count"=>1}, {"key"=>"title", "doc_count"=>1}]).to_json)
       end
     end
   end

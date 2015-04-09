@@ -87,7 +87,7 @@ RSpec.configure do |config|
   config.before(:all) do
     Identity.destroy_all
     LoginCredential.destroy_all
-    Bindery.clear_index
+    # Bindery.clear_index # This is very slow!
   end
 
 end

@@ -1,5 +1,7 @@
 require 'rails_helper'
 
+# Also see spec/concerns/bindery/node/*_spec.rb
+
 describe Node do
   let(:identity) { FactoryGirl.create :identity }
   let(:pool){ FactoryGirl.create :pool, :owner=>identity }

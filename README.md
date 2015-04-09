@@ -20,15 +20,15 @@ cd databindery-api-server
 bundle install
 rake db:create
 rake db:migrate
-rake elasticsearch:testcluster:start
+rake elastic_search:testcluster:start
 rake spec
-rake elasticsearch:testcluster:stop
+rake elastic_search:testcluster:stop
 rake swagger:docs
 open http://localhost:3000/api-docs
 ```
 
 ## Run the Server
-To run the server locally (assuming you have elasticsearch installed)
+To run the server locally, start elasticsearch (assuming you have elasticsearch installed) and sidekiq
 ```
 elasticsearch --config=./elasticsearch-dev.yml
 bundle exec sidekiq

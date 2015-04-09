@@ -32,7 +32,7 @@ describe Api::V1::FileEntitiesController do
     it "should work with info posted by S3 Direct Upload" do
       params_from_s3_direct_upload = {:pool_id=>@pool.short_name, :identity_id=>@identity.short_name, "url"=>"https://s3.amazonaws.com/f542aab0-66e4-0130-8d40-442c031da886/uploads%2F20130305T1425Z_eaf29caae12b6d4a101297b45c46dc2a%2FDSC_0549-3.jpg", "filepath"=>"/f542aab0-66e4-0130-8d40-442c031da886/uploads%2F20130305T1425Z_eaf29caae12b6d4a101297b45c46dc2a%2FDSC_0549-3.jpg", "filename"=>"DSC_0549-3.jpg", "filesize"=>"471990", "filetype"=>"image/jpeg", "binding"=>"https://s3.amazonaws.com/f542aab0-66e4-0130-8d40-442c031da886/uploads%2F20130305T1425Z_eaf29caae12b6d4a101297b45c46dc2a%2FDSC_0549-3.jpg"}
       # There's not actually an object in s3 for this test, so capture the attempt to update its metadata
-      S3Connection.any_instance.stub(:get).and_return(double(:metadata=>{}))
+      Bindery::Persistence::AWS::S3::Connection.any_instance.stub(:get).and_return(double(:metadata=>{}))
       post :create, params_from_s3_direct_upload
       response.should be_successful
       file_entity = assigns[:file_entity]
@@ -55,7 +55,7 @@ describe Api::V1::FileEntitiesController do
               "persistent_id"=>"89d8de30-4013-0131-8fee-7cd1c3f26451",
               "storage_location_id"=>"89d8de30-4013-0131-8fee-7cd1c3f26451_20131205T134412CST",
           }}
-      S3Connection.any_instance.stub(:get).and_return(double(:metadata=>{}))
+      Bindery::Persistence::AWS::S3::Connection.any_instance.stub(:get).and_return(double(:metadata=>{}))
       #FileEntity.should_receive(:register).with(@pool, {"persistent_id"=>"89d8de30-4013-0131-8fee-7cd1c3f26451", "bucket"=>@pool.persistent_id, "data"=>{"file_name"=>"909-Last-Supper-Large.jpg", "mime_type"=>"image/jpeg", "file_size"=>"183237", "storage_location_id"=>"89d8de30-4013-0131-8fee-7cd1c3f26451_20131205T134412CST"}}) { Node.new(pool:@pool, model:Model.file_entity) }
       post :create, params_from_s3_upload
       response.should be_successful

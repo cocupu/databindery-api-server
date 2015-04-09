@@ -26,7 +26,7 @@ class Pool < ActiveRecord::Base
 
   has_many :models, :dependent => :destroy
   has_many :mapping_templates, :dependent => :destroy
-  has_many :s3_connections, :dependent => :destroy
+  has_many :s3_connections, :dependent => :destroy, table_name:"s3_connections", class_name:"Bindery::Persistence::AWS::S3::Connection"
   has_many :access_controls, :dependent => :destroy
   has_many :audience_categories
   accepts_nested_attributes_for :access_controls
@@ -110,7 +110,7 @@ class Pool < ActiveRecord::Base
   end
 
   def file_store_type
-    Bindery::Persistence::S3
+    Bindery::Persistence::AWS::S3
   end
 
   def default_file_store

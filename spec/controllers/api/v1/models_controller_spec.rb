@@ -70,8 +70,7 @@ describe Api::V1::ModelsController do
           "name"=>model.name,
           "label_field_id"=>"",
           "allow_file_bindings"=>true,
-          "pool" =>pool.short_name,
-          "identity" =>identity.short_name },
+          "pool_id" =>pool.id },
           {"id"=>file_model.id,
           "url"=>"/api/v1/models/#{file_model.id}",
           "association_fields"=>[],
@@ -155,8 +154,8 @@ describe Api::V1::ModelsController do
         response.should be_successful
         json = JSON.parse response.body
         json["name"].should == 'Turkey'
-        json["pool"].should == in_pool.short_name
-        json["identity"].should == identity.short_name
+        json["pool_id"].should == in_pool.id
+        # json["identity"].should == identity.id
         json["id"].should_not be_nil
         model = Model.last
         model.fields.count.should == 2

@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe S3Connection do
+describe Bindery::Persistence::AWS::S3::Connection do
   describe "bucket" do
     it "should return the bucket with the given name" do
       subject.send(:conn).should_receive(:buckets).and_return({"myBucketName"=>"the bucket"})

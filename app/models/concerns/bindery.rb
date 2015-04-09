@@ -35,7 +35,10 @@ module Bindery
 
 
   def self.clear_index
-    Rails.logger.warn "clear_index does not do anything!"
+    # Rails.logger.warn "clear_index does not do anything!"
+    # This deletes all of the elasticsearch indices (very slow!)
+    Bindery::Persistence::ElasticSearch.client.indices.delete index: "_all"
+    # This deletes all of the items in solr
     # raw_results = Bindery.solr.get 'select', :params => {:q => '{!lucene}*:*', :fl=>'id', :qt=>'document', :rows=>2000}
     # Bindery.solr.delete_by_id raw_results["response"]["docs"].map{ |d| d["id"]}
     # Bindery.solr.commit

@@ -63,7 +63,11 @@ module Bindery::Persistence::ElasticSearch::Pool
     # Deletes corresponding index and aliases from elasticsearch
     def destroy_artifacts
       # Providing the alias name as the value of :index tells elasticsearch to delete the alias and the index it points to.
-      client.indices.delete index: pool.to_param
+      begin
+        client.indices.delete index: pool.to_param
+      rescue Elasticsearch::Transport::Transport::Errors::NotFound => e
+        # Index doesn't exist, so don't need to delete it.  Do nothing.
+      end
     end
 
     alias :create :create_artifacts

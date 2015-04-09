@@ -13,7 +13,7 @@ describe FileEntity do
                   }}
       s3_obj_metadata_hash = {}
       stub_s3_obj = double("S3 Object", :metadata=>s3_obj_metadata_hash)
-      S3Connection.any_instance.stub(:get).and_return(stub_s3_obj)
+      Bindery::Persistence::AWS::S3::Connection.any_instance.stub(:get).and_return(stub_s3_obj)
       file_entity = FileEntity.register(@pool, params)
       s3_obj_metadata_hash.should == {"filename"=>"DSC_0549-3.jpg", "bindery-pid" => file_entity.persistent_id}
       file_entity.file_entity_type.should == "S3"
@@ -51,7 +51,7 @@ describe FileEntity do
       @pool = FactoryGirl.create :pool, :owner=>@identity
     end
     it "should generate an UNSAVED FileEntity with persistent_id and storage_location_id" do
-      Bindery::Persistence::S3.should_receive(:generate_storage_location_id).and_return("generated storage id")
+      Bindery::Persistence::AWS::S3.should_receive(:generate_storage_location_id).and_return("generated storage id")
       file_entity = FileEntity.placeholder_for_upload(@pool, {})
       file_entity.should be_new_record
       file_entity.persistent_id.should_not be_nil

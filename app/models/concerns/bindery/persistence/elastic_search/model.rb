@@ -49,7 +49,11 @@ module Bindery::Persistence::ElasticSearch::Model
 
     # Destroy all elasticsearch artifacts associated with this Model
     def destroy
-      Bindery::Persistence::ElasticSearch.client.indices.delete_mapping index: model.pool.to_param, type: model.to_param
+      begin
+        Bindery::Persistence::ElasticSearch.client.indices.delete_mapping index: model.pool.to_param, type: model.to_param
+      rescue Elasticsearch::Transport::Transport::Errors::NotFound => e
+        # Mapping doesn't exist, so don't need to delete it.  Do nothing.
+      end
     end
 
     def get

@@ -1,4 +1,5 @@
-class S3Connection < ActiveRecord::Base
+class Bindery::Persistence::AWS::S3::Connection < ActiveRecord::Base
+  self.table_name = "s3_connections"
   # attr_accessible :title, :body
   belongs_to :pool
 
