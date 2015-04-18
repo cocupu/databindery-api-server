@@ -1,5 +1,7 @@
 class Api::V1::NodesController < Api::V1::DataController
-  load_and_authorize_resource :except=>[:index, :search, :update, :create, :import, :find_or_create], :find_by => :persistent_id
+  include Api::V1::SwaggerDefs::Nodes
+  load_and_authorize_resource :except=>[:index, :search, :update, :create, :import, :find_or_create, :history], :find_by => :persistent_id
+  load_resource only:[:history], :find_by => :persistent_id
   before_filter :load_pool
   load_and_authorize_resource :pool
   before_filter :set_perspective, only:[:search]
@@ -65,6 +67,12 @@ class Api::V1::NodesController < Api::V1::DataController
       format.json { render json: serialize_node(@node) }
       # format.html
     end
+  end
+
+  def history
+    authorize! :read, Node
+    @node_versions = @node.versions
+    render json: @node_versions.map{|n| serialize_node(n) }
   end
   
   def create

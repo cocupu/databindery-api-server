@@ -13,28 +13,29 @@ describe Api::V1::NodesController do
   let(:model) { FactoryGirl.create(:model, pool:pool, label_field:first_name_field,
                                    fields: [first_name_field, last_name_field, title_field]) }
   let(:not_my_model) { FactoryGirl.create(:model) }
+  let(:different_pool_node) { FactoryGirl.create(:node, model:model ) }
+  let(:different_model_node) { FactoryGirl.create(:node, pool:pool ) }
 
   describe "index" do
     before do
       @node1 = FactoryGirl.create(:node, model:model, pool:pool, data:{first_name_field.to_param=>"Janice", 'undefined'=>'123721'})
       @node2 = FactoryGirl.create(:node, model:model, pool:pool)
-      @different_pool_node = FactoryGirl.create(:node, model:model )
-      @different_model_node = FactoryGirl.create(:node, pool:pool )
+      @different_model_node = different_model_node
       sign_in identity.login_credential
     end
     it "should load the model and its nodes" do
       get :index, :model_id => model, pool_id: pool
       expect(response).to be_success
       assigns[:model].should == model
-      assigns[:nodes].should include(@node1, @node2) 
-      assigns[:nodes].should_not include(@different_pool_node) 
-      assigns[:nodes].should_not include(@different_model_node) 
+      assigns[:nodes].should include(@node1, @node2)
+      assigns[:nodes].should_not include(different_pool_node)
+      assigns[:nodes].should_not include(@different_model_node)
     end
     it "should load all the nodes" do
       get :index, pool_id: pool, identity_id: identity
       expect(response).to be_success
-      assigns[:nodes].should include(@node1, @node2, @different_model_node) 
-      assigns[:nodes].should_not include(@different_pool_node) 
+      assigns[:nodes].should include(@node1, @node2, @different_model_node)
+      assigns[:nodes].should_not include(different_pool_node)
     end
     it "should respond with json" do
       get :index, :format=>'json', pool_id: pool, identity_id: identity
@@ -57,7 +58,6 @@ describe Api::V1::NodesController do
                                        fields: [@first_name_field, @last_name_field,@title_field])
       @node1 = FactoryGirl.create(:node, model: @model, pool: @pool, :data=>{"first_name" =>'Justin', "last_name"=>'Coyne', "title"=>'Mr.'})
       @node2 = FactoryGirl.create(:node, model: @model, pool: @pool, :data=>{"first_name"=>'Matt', "last_name"=>'Zumwalt', "title"=>'Mr.'})
-      @different_pool_node = FactoryGirl.create(:node, model: @model )
       @different_model_node = FactoryGirl.create(:node, pool: @pool)
       sleep 1
     end
@@ -103,7 +103,6 @@ describe Api::V1::NodesController do
     before do
       @node1 = FactoryGirl.create(:node, model:model, pool:pool)
       @node2 = FactoryGirl.create(:node, model:model, pool:pool)
-      @different_pool_node = FactoryGirl.create(:node, model:model )
       @different_model_node = FactoryGirl.create(:node, pool:pool )
       sign_in identity.login_credential
     end
@@ -112,7 +111,7 @@ describe Api::V1::NodesController do
       get :show, :id => @node1.persistent_id, pool_id:pool, identity_id:identity
       expect(response).to be_success
       assigns[:models].should == [model] # for sidebar
-      assigns[:node].should == @node1 
+      assigns[:node].should == @node1
     end
     it "should respond with json" do
       get :show, :id => @node1.persistent_id, :format=>'json', pool_id:pool, identity_id:identity
@@ -120,11 +119,52 @@ describe Api::V1::NodesController do
       expect(response.body).to eq( expected_json_for_node(@node1) )
     end
     it "should not load node we don't have access to" do
-      get :show, :id => @different_pool_node.persistent_id, pool_id:pool, identity_id:identity
+      get :show, :id => different_pool_node.persistent_id, pool_id:pool, identity_id:identity
       expect(response).to respond_forbidden
     end
   end
-  
+
+  describe "history" do
+    subject { FactoryGirl.create(:node, model:model, pool:pool) }
+    let(:identity1) { find_or_create_identity("chinua") }
+    let(:identity2) { find_or_create_identity("bob") }
+    before do
+      @original = subject
+      subject.update_attributes(:modified_by=>identity1, :data=>{'boo'=>'bap'})
+      subject.save
+      @version1 = subject.latest_version
+      lv = subject.latest_version
+      lv.update_attributes(:modified_by=>identity2, :data=>{'boo'=>'bappy'})
+      lv.save
+      @version2 = subject.latest_version
+    end
+    it "should require authentication" do
+      get :history, :id => different_pool_node.persistent_id, pool_id:pool
+      expect(response).to respond_unauthorized
+    end
+    it "should not load node we don't have access to" do
+      sign_in identity2.login_credential
+      get :history, :id => different_pool_node.persistent_id, pool_id:pool
+      expect(response).to respond_unauthorized
+    end
+    it "returns the full history of node versions for the node as json" do
+      sign_in identity.login_credential
+      get :history, :id => subject.persistent_id, pool_id:pool
+      expect(assigns[:node_versions]).to eq(subject.versions)
+      json = JSON.parse(response.body)
+      # expect(json).to eq( subject.versions.map{|n| expected_json_for_node(n)}.as_json)
+      # subject.versions.each do |version|
+      #   expect(json).to include(expected_json_for_node(version))
+      # end
+      expect(json.map{|v| v["node_version_id"]}).to eq(subject.versions.map{|v| v.id})
+    end
+    it "denies access when you don't have read permission on the pool" do
+      sign_in not_my_pool.owner.login_credential
+      get :history, :id => subject.persistent_id, pool_id:pool
+      expect(response).to respond_forbidden
+    end
+  end
+
   describe "find_or_create", sidekiq: :inline, elasticsearch:true do
     before(:all) do
       Sidekiq::Testing.inline! # Ensure that node Indexers are run in this before(:all) block
@@ -145,7 +185,7 @@ describe Api::V1::NodesController do
     before do
       sign_in identity.login_credential
     end
-    it "should not be successful using a pool I can't edit" do       
+    it "should not be successful using a pool I can't edit" do
       post :find_or_create, :node => {:model_id=>model, :data=>{@first_name_field.to_param =>"Justin", @last_name_field.to_param => "Coyne"}}, pool_id: not_my_pool, identity_id: identity.short_name
       expect(response).to respond_forbidden
       expect(assigns[:node]).to be_nil
@@ -164,7 +204,7 @@ describe Api::V1::NodesController do
       assigns[:node].data.should == {first_name_field.to_param=>"Randy", last_name_field.to_param=>"Reckless"}
       assigns[:node].model.should == model
     end
-    it "should return json" do 
+    it "should return json" do
       post :find_or_create, :node => {:model_id=>model, :data=>{@first_name_field.to_param =>"Justin", @last_name_field.to_param=>"Ball", @title_field.to_param=>"Mr."}}, pool_id: pool, identity_id: identity, :format=>:json
       expect(response).to be_success
       # JSON.parse(response.body).keys.should include('persistent_id', 'model_id', 'url', 'pool', 'identity', 'associations', 'binding')
@@ -177,13 +217,13 @@ describe Api::V1::NodesController do
     before do
       sign_in identity.login_credential
     end
-    it "should be successful using a model I own" do 
+    it "should be successful using a model I own" do
       post :create, :node=>{:binding => '0B4oXai2d4yz6bUstRldTeXV0dHM', :model_id=>model}, pool_id: pool, identity_id: identity.short_name
       expect(response).to be_success
       assigns[:node].binding.should == '0B4oXai2d4yz6bUstRldTeXV0dHM'
       assigns[:node].model.should == model
     end
-    it "should not be successful using a model I don't own" do 
+    it "should not be successful using a model I don't own" do
       post :create, :node=>{:binding => '0B4oXai2d4yz6bUstRldTeXV0dHM', :model_id=>not_my_model}, pool_id: pool, identity_id: identity.short_name
       expect(response).to respond_bad_request
       expect(assigns[:node].model).to be_nil
@@ -192,7 +232,7 @@ describe Api::V1::NodesController do
       post :create, :node=>{:binding => '0B4oXai2d4yz6bUstRldTeXV0dHM', :model_id=>model}, pool_id: pool, identity_id: identity.short_name
       assigns[:node].modified_by.should == identity
     end
-    it "should return json" do 
+    it "should return json" do
       post :create, :node=>{:data=> {first_name_field.to_param => 'New val'},  :model_id=>model}, pool_id: pool, identity_id: identity, :format=>:json
       expect(response).to be_success
       model.nodes.count.should == 1
@@ -205,7 +245,6 @@ describe Api::V1::NodesController do
     before do
       @node1 = FactoryGirl.create(:node, model: model, pool:pool)
       @node2 = FactoryGirl.create(:node, model: model, pool:pool)
-      @different_pool_node = FactoryGirl.create(:node, model: model )
       @different_model_node = FactoryGirl.create(:node, pool:pool )
       sign_in identity.login_credential
     end
@@ -216,7 +255,7 @@ describe Api::V1::NodesController do
       new_version.data[first_name_field.to_param].should == "Updated val"
     end
     it "should not load node we don't have access to" do
-      put :update, :id => @different_pool_node.persistent_id, :node=>{:data=>{ }}, pool_id: pool, identity_id: identity
+      put :update, :id => different_pool_node.persistent_id, :node=>{:data=>{ }}, pool_id: pool, identity_id: identity
       expect(response).to respond_forbidden
     end
     it "should set modified_by on the node version it creates" do
@@ -235,7 +274,7 @@ describe Api::V1::NodesController do
       expect(new_version.data[first_name_field.to_param]).to eq "Updated val"
       expect( response.body ).to eq( expected_json_for_node(new_version) )
     end
-    
+
   end
 
   describe "import" do
@@ -277,12 +316,11 @@ describe Api::V1::NodesController do
       expect(response.body).to eq(expected_json_for_node(dummy_file_node))
     end
   end
-  
+
   describe "delete" do
     before do
       @node1 = FactoryGirl.create(:node, model: model, pool: pool)
       @node2 = FactoryGirl.create(:node, model: model, pool: pool)
-      @different_pool_node = FactoryGirl.create(:node, model: model )
       @different_model_node = FactoryGirl.create(:node, pool: pool )
     end
     describe "when not logged on" do
@@ -298,7 +336,7 @@ describe Api::V1::NodesController do
         sign_in identity.login_credential
       end
       it "should deny action on a node that's not in a pool I have access to" do
-        delete :destroy, :id=>@different_pool_node, pool_id: pool, identity_id: identity
+        delete :destroy, :id=>different_pool_node, pool_id: pool, identity_id: identity
         expect(response).to respond_forbidden
       end
       

@@ -7,6 +7,9 @@ Rails.application.routes.draw do
       resources :fields, except:[:new,:edit]
       resources :pools, except:[:new,:edit] do
         resources :nodes, :only=>[:create, :update, :show, :index, :destroy] do
+          member do
+            get 'history'
+          end
           collection do
             get 'search'
             post 'find_or_create'

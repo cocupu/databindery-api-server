@@ -27,9 +27,9 @@ module Api::V1::SwaggerDefs::Models
     end
 
     swagger_api :update do
-      summary "Updates a Pool"
+      summary "Updates a Model"
       param :path, :id, :integer, :required, "Pool Id"
-      param :form, :name, :string, :optional, "A name for the pool"
+      param :form, :name, :string, :optional, "A name for the model"
       param :form, :short_name, :string, :optional, "A short name for the pool. Must contain alphanumeric characters, dashes (-) and underscores (_) without spaces."
       param :form, :description, :string, :optional, "Description of the pool's content"
       response :success, "Success", :Model
@@ -40,7 +40,7 @@ module Api::V1::SwaggerDefs::Models
 
     swagger_api :show do
       summary "Fetches a single Model"
-      param :path, :id, :integer, :optional, "Model ID"
+      param :path, :id, :integer, :required, "Model ID"
       response :success, "Success", :Model
       response :unauthorized
       response :not_acceptable
