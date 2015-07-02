@@ -10,6 +10,6 @@
 # Required Methods:
 #   #contents returns the Nodes representing the files within the StorageContainer
 #   #metadata returns the Node(s) containing metadata that describe(s) the StorageContainer itself
-class Bindery::Persistence::StorageContainer
+class Bindery::Persistence::StorageContainer < ActiveRecord::Base
 
 end
