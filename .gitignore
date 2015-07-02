@@ -25,6 +25,9 @@ bower_components
 # Generate jetty, don't store in git
 jetty/
 
+# Don't store AWS credentials
+config/s3.yml
+
 # Uploads are stored in public/system
 public/system
 

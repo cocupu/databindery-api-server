@@ -1,0 +1,9 @@
+development:
+    access_key_id: AWSACCESSKEYID
+secret_access_key: Vf+33kliGGshJJ+Hkql/MKH778DDWM
+test:
+    access_key_id: AWSACCESSKEYID
+secret_access_key: Vf+33kliGGshJJ+Hkql/MKH778DDWM
+production:
+    access_key_id: AWSACCESSKEYID
+secret_access_key: Vf+33kliGGshJJ+Hkql/MKH778DDWM
