@@ -1,34 +1,25 @@
 class Api::V1::AudienceCategoriesController < ApplicationController
-  load_resource :identity, :find_by => :short_name, :only=>[:index, :create]
-  load_and_authorize_resource :pool, :find_by => :short_name, :through=>:identity, :only=>[:index, :create]
+  load_and_authorize_resource :pool, :only=>[:index, :create]
   load_and_authorize_resource :only=>[:show, :edit, :update]
 
   def index
     @audience_categories = @pool.audience_categories
-    respond_to do |format|
-      format.json { render :json=> @audience_categories.map{|category| serialize_category(category)}}
-    end
+    render :json=> @audience_categories.map{|category| serialize_category(category)}
   end
 
   def show
-    respond_to do |format|
-      format.json { render :json=>serialize_category(@audience_category) }
-    end
+    render :json=>serialize_category(@audience_category)
   end
 
   def create
     @audience_category = @pool.audience_categories.build(audience_category_params)
     @audience_category.save
-    respond_to do |format|
-      format.json { render :json=>serialize_category(@audience_category) }
-    end
+    render :json=>serialize_category(@audience_category)
   end
 
   def update
     @audience_category.update_attributes(audience_category_params)
-    respond_to do |format|
-      format.json { render :json=>serialize_category(@audience_category)  }
-    end
+    render :json=>serialize_category(@audience_category)
   end
 
   private
@@ -52,7 +43,7 @@ class Api::V1::AudienceCategoriesController < ApplicationController
   end
 
   def serialize_category(category)
-    context_info = {"pool_name"=>params[:pool_id], "identity_name"=>params[:identity_id]}
+    context_info = {"pool_id"=>params[:pool_id], "identity_id"=>params[:identity_id]}
     h = category.as_json.merge(context_info)
     h["audiences"].each {|audience| audience.merge!(context_info)}
     h

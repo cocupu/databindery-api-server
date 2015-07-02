@@ -6,30 +6,22 @@ class Api::V1::AudiencesController < ApplicationController
 
   def index
     @audiences = @audience_category.audiences
-    respond_to do |format|
-      format.json { render :json=> @audiences.map {|audience| serialize_audience(audience) }}
-    end
+    render :json=> @audiences.map {|audience| serialize_audience(audience) }
   end
 
   def show
-    respond_to do |format|
-      format.json { render :json=>serialize_audience(@audience) }
-    end
+    render :json=>serialize_audience(@audience)
   end
 
   def create
     @audience = @audience_category.audiences.build(audience_params)
     @audience.save
-    respond_to do |format|
-      format.json { render :json=>serialize_audience(@audience) }
-    end
+    render :json=>serialize_audience(@audience)
   end
 
   def update
     @audience.update_attributes(audience_params)
-    respond_to do |format|
-      format.json { render :json=>serialize_audience(@audience) }
-    end
+    render :json=>serialize_audience(@audience)
   end
 
   private
@@ -50,7 +42,7 @@ class Api::V1::AudiencesController < ApplicationController
     # Grab the filters params out of the full submitted params hash
     if params["filters"]
       to_move = params["filters"]
-    elsif params["audience"]["filters"]
+    elsif params["audience"] && params["audience"]["filters"]
       to_move = params["audience"]["filters"]
     end
     # Write the filters params into the target_hash as filters_attributes
