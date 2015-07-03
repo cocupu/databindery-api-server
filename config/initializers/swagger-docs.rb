@@ -2,13 +2,13 @@ class Swagger::Docs::Config
     def self.base_api_controller; ActionController::API end
     def self.transform_path(path, api_version)
         # Make a distinction between the APIs and API documentation paths.
-        "api-docs/#{path}"
+        "/api-docs/#{path}"
     end
 end
 if Rails.env == 'development'
-    base_path_for_env = 'http://localhost:3000/'
+    base_path_for_env = 'http://localhost:3000'
 elsif Rails.env == 'production'
-    base_path_for_env = 'http://bindery.cocupu.com/'
+    base_path_for_env = 'http://bindery.cocupu.com'
 else
     base_path_for_env = "localhost"
 end
@@ -22,7 +22,7 @@ Swagger::Docs::Config.register_apis({
         base_path: base_path_for_env,
         # if you want to delete all .json files at each generation
         clean_directory: true,
-        controller_base_path: "",
+        controller_base_path: "/",
         camelize_model_properties: false,
         # add custom attributes to api-docs
         attributes: {

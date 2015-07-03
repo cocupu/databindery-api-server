@@ -58,6 +58,8 @@ If you're building the docs for the production site, pass the RAILS_ENV
 
 Otherwise, for local use in development mode, you can simply call `rake swagger:docs`
 
+*IMPORTANT* After generating the docs, you must delete the trailing slash from the +basePath+ in `public/api-docs/api-docs.json`.  Otherwise, you won't be able to generate client code using the swagger-codegen utility.
+
 This will generate the [swagger](https://github.com/swagger-api/swagger-spec) json files in public/api-docs
 
 ## Viewing the Docs
