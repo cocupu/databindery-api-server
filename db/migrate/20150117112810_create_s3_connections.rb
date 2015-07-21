@@ -1,4 +1,4 @@
-class CreateBindery::Persistence::AWS::S3::Connections < ActiveRecord::Migration
+class CreateS3Connections < ActiveRecord::Migration
   def change
     create_table "s3_connections", force: true do |t|
       t.integer  "pool_id",                                   null: false
