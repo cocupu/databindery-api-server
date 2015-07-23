@@ -29,18 +29,37 @@ module Bindery::Node::Versioning
       Node.where(:persistent_id=>persistent_id).order('created_at desc')
     end
 
-    # Get the latest version of the node with this persistent id
+    # Get the ids of all node versions with this persistent id in descending order of creation (newest first)
+    def version_ids(persistent_id)
+      Node.select(:id).where(:persistent_id=>persistent_id).order('created_at desc').ids
+    end
+
+    # Get the latest node version with this persistent id
     def latest_version(persistent_id)
       Node.versions(persistent_id).first
     end
+
+    # Get the id of the latest node version with this persistent id
+    def latest_version_id(persistent_id)
+      Node.version_ids(persistent_id).first
+    end
+
   end
 
   def versions
     Node.versions(persistent_id)
   end
 
+  def version_ids
+    Node.version_ids(persistent_id)
+  end
+
   def latest_version
     Node.latest_version(persistent_id)
+  end
+
+  def latest_version_id
+    Node.latest_version_id(persistent_id)
   end
 
   # Returns the node (version) where the current node's file binding was set

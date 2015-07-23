@@ -6,6 +6,7 @@ describe Node do
   let(:first_name_field) { FactoryGirl.create :first_name_field }
   let(:last_name_field) { FactoryGirl.create :last_name_field }
   let(:title_field) { FactoryGirl.create :title_field }
+  let(:node)  { Node.new(model: model) }
   let(:model) do
     FactoryGirl.create(:model,
                        fields: [first_name_field,last_name_field],
@@ -18,11 +19,9 @@ describe Node do
                        label_field: last_name_field)
   end
 
-  before do
-    subject.model = model
-  end
+  subject { node }
 
-  it "should create a new version when it's changed" do
+  it "creates a new version when it's changed" do
     subject.pool = pool
     subject.save!
     subject.update_attributes(:data=>{'boo'=>'bap'})
@@ -30,7 +29,7 @@ describe Node do
     all_versions.length.should == 2
   end
 
-  it "should copy on write (except id, parent_id and timestamps)" do
+  it "copies on write (except id, parent_id and timestamps)" do
     subject.pool = pool
     subject.save!
     subject.attributes = {:data=>{'boo'=>'bap'}}
@@ -49,13 +48,39 @@ describe Node do
     new_attributes.should == old_attributes
   end
 
-  it "should get the latest version" do
-    subject.pool = pool
-    subject.save!
-    subject.attributes = {:data=>{'boo'=>'bap'}}
-    new_subject = subject.update
-
-    Node.latest_version(subject.persistent_id).should == new_subject
+  describe "version accessors" do
+    let(:node) { Node.create!(model:model, pool:pool) }
+    let(:updated_node) do
+      node.attributes = {:data=>{'boo'=>'bap'}}
+      node.update
+    end
+    before do
+      updated_node
+    end
+    describe "versions" do
+      it "gets all the node versions" do
+        expect(Node.versions(subject.persistent_id)).to eq [updated_node, node]
+        expect(node.versions).to eq [updated_node, node]
+      end
+    end
+    describe "version_ids" do
+      it "gets all the node version ids" do
+        expect(Node.version_ids(subject.persistent_id)).to eq [updated_node.id, node.id]
+        expect(node.version_ids).to eq [updated_node.id, node.id]
+      end
+    end
+    describe "latest_version" do
+      it "gets the latest version" do
+        expect(Node.latest_version(subject.persistent_id)).to eq updated_node
+        expect(node.latest_version).to eq(updated_node)
+      end
+    end
+    describe "latest_version_id" do
+      it "gets the latest version id" do
+        expect(Node.latest_version_id(subject.persistent_id)).to eq updated_node.id
+        expect(node.latest_version_id).to eq(updated_node.id)
+      end
+    end
   end
 
   it "should track who made changes" do
