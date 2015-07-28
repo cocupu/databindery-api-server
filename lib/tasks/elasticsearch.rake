@@ -1,6 +1,5 @@
 begin
   require 'elasticsearch/extensions/test/cluster'
-  require 'foo'
 
   namespace :elastic_search do
     namespace :testcluster do
