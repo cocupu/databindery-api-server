@@ -8,7 +8,7 @@ end
 if Rails.env == 'development'
     base_path_for_env = 'http://localhost:3000'
 elsif Rails.env == 'production'
-    base_path_for_env = 'http://bindery.cocupu.com'
+    base_path_for_env = 'http://api.databindery.com'
 else
     base_path_for_env = "localhost"
 end
