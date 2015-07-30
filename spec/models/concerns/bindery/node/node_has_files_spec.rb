@@ -48,7 +48,7 @@ describe Node do
   end
   describe "attaching a file" do
     before do
-      config = YAML.load_file(Rails.root + 'config/s3.yml')[Rails.env]
+      config = YAML.load_file(Rails.root + 'config/aws.yml')[Rails.env]
       @s3 = FactoryGirl.create(:s3_connection, config.merge(pool: pool))
     end
     it "should store a list of attached files" do

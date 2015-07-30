@@ -44,6 +44,11 @@ GEM
     aws-sdk-v1 (1.61.0)
       json (~> 1.4)
       nokogiri (>= 1.4.4)
+    aws-ses (0.4.4)
+      builder
+      mail (> 2.2.5)
+      mime-types
+      xml-simple
     bcrypt (3.1.9)
     blacklight (5.8.0)
       bootstrap-sass (~> 3.2)
@@ -259,6 +264,7 @@ PLATFORMS
 DEPENDENCIES
   activerecord-import
   aws-sdk
+  aws-ses (~> 0.4.4)
   blacklight
   byebug
   cancan

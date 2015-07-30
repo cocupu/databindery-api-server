@@ -26,11 +26,11 @@ end
 
 #
 # S3
-# Generate s3.yml
+# Generate aws.yml
 
-template "#{deploy_path}/shared/config/s3.yml" do
+template "#{deploy_path}/shared/config/aws.yml" do
   local  true
-  source "#{local_templates_path}/s3.yml.erb"
+  source "#{local_templates_path}/aws.yml.erb"
   owner  'deploy'
   group  'www-data'
   mode   '644'
@@ -40,9 +40,9 @@ template "#{deploy_path}/shared/config/s3.yml" do
                 :secret_access_key => node['deploy']['databindery_api_server']['aws']['secret_access_key']
             })
 end
-# symlink to the shared s3.yml we just generated
-link "#{release_path}/config/s3.yml" do
-  to     "#{deploy_path}/shared/config/s3.yml"
+# symlink to the shared aws.yml we just generated
+link "#{release_path}/config/aws.yml" do
+  to     "#{deploy_path}/shared/config/aws.yml"
   owner  'deploy'
   group  'www-data'
   action :create

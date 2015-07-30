@@ -295,7 +295,7 @@ describe Api::V1::NodesController do
 
   describe "attach_file" do
     before do
-      config = YAML.load_file(Rails.root + 'config/s3.yml')[Rails.env]
+      config = YAML.load_file(Rails.root + 'config/aws.yml')[Rails.env]
       @s3 = FactoryGirl.create(:s3_connection, config.merge(pool: pool))
       @node = FactoryGirl.create(:node, model:model, pool:pool)
       sign_in identity.login_credential

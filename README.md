@@ -18,7 +18,7 @@ This is the main DataBindery code base.
 git clone git@github.com/cocupu/databindery-api-server
 cd databindery-api-server
 bundle install
-cp config/s3.yml.example config/s3.yml  # ... then put valid AWS credentials into this file ...
+cp config/aws.yml.example config/aws.yml  # ... then put valid AWS credentials into this file ...
 rake db:create
 rake db:migrate
 rake elastic_search:testcluster:start

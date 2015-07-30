@@ -27,6 +27,7 @@ jetty/
 
 # Don't store AWS credentials
 config/s3.yml
+config/aws.yml
 
 # Uploads are stored in public/system
 public/system

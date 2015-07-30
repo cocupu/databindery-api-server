@@ -38,6 +38,7 @@ gem 'carrot'
 
 # External Services
 gem "aws-sdk"
+gem 'aws-ses', '~> 0.4.4', require: 'aws/ses'
 
 # Data Import and Manipulations
 gem 'roo', "~> 1.12.2"
