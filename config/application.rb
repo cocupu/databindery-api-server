@@ -9,6 +9,7 @@ Bundler.require(*Rails.groups)
 module DatabinderyApiServer
   class Application < Rails::Application
     config.action_mailer.default_url_options = { :host => "api.databindery.com" }
+    config.filter_parameters += [:password, :password_confirmation]
 
     # Add CORS support
     config.middleware.use Rack::Cors do
