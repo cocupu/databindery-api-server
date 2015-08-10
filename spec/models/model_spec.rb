@@ -181,4 +181,10 @@ describe Model do
       subject.allows_file_bindings?.should == false
     end
   end
+
+  describe "find_or_create_by" do
+    it "supports re-using the canonical FileEntity model" do
+      expect(Model.find_or_create_by(code:"FILE")).to eq Model.file_entity
+    end
+  end
 end

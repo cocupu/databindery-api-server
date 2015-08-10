@@ -64,6 +64,14 @@ class Model < ActiveRecord::Base
     "LEFT OUTER JOIN access_controls ON access_controls.pool_id = models.pool_id").where("(owner_id = ?) OR models.pool_id is NULL OR access_controls.identity_id = ?", identity.id, identity.id)
   end
 
+  # Overrides Model.find_or_create_by to support retrieving the canonical Model.file_entity
+  def self.find_or_create_by(attributes, &block)
+    if attributes["code"] == FILE_ENTITY_CODE || attributes[:code] == FILE_ENTITY_CODE
+      return Model.file_entity
+    else
+      super
+    end
+  end
 
   # Return true if this model is the file_entity for this identity
   def file_entity?
