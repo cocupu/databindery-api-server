@@ -78,6 +78,10 @@ describe Bindery::PoolExporter do
       expect(converted_model['uri']).to eq(model2.to_uri)
       expect(converted_model['associations']).to be_nil
     end
+    it "uses canonical uri for FileEntity" do
+      converted_model = subject.convert_model(Model.file_entity)
+      expect(converted_model['uri']).to eq(FileEntity::CANONICAL_URI)
+    end
     it "processes association fields to use model uris as their :references values" do
       converted_model = subject.convert_model(model2)
       converted_association_field = converted_model['fields'].select {|f| f['name'] == 'an_association'}.first

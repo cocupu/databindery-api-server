@@ -160,7 +160,11 @@ class Model < ActiveRecord::Base
   end
 
   def to_uri
-    "http://api.databindery.com/api/v1/pools/#{self.pool_id}/models/#{self.id}"
+    if file_entity?
+      FileEntity::CANONICAL_URI
+    else
+      "http://api.databindery.com/api/v1/pools/#{self.pool_id}/models/#{self.id}"
+    end
   end
 
   # Return the Model's array of fields and associations as they are ordered in the edit view

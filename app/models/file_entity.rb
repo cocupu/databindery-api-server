@@ -1,5 +1,5 @@
 module FileEntity
-
+  CANONICAL_URI = "http://api.databindery.com/api/v1/models/canonical#file_entity"
   def self.build(opts={})
     file_entity = Node.new( opts )
     file_entity.extend FileEntity
@@ -59,6 +59,10 @@ module FileEntity
 
   def model
     Model.file_entity
+  end
+
+  def to_uri
+    CANONICAL_URI
   end
   
   def file_entity_type=(name)
