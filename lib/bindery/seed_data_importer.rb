@@ -8,6 +8,7 @@ module Bindery
       else
         lc = LoginCredential.create(provider:'email',email:'seedcurator@databindery.com',password:'seedcurator', identities:[seed_identity])
         lc.confirm!
+        lc
       end
     end
 
