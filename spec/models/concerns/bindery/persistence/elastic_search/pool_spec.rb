@@ -17,6 +17,7 @@ describe Bindery::Persistence::ElasticSearch::Pool do
   describe 'destroy' do
     it "destroys the elasticsearch index and alias", elasticsearch:true do
       subject.destroy
+      allow(subject).to receive(:delete_bucket)
       expect(elasticsearch.indices.get(index: "#{subject.to_param}*", expand_wildcards: 'open').count).to eq 0
       expect{ elasticsearch.indices.get_alias(name: subject.id).count }.to raise_error(Elasticsearch::Transport::Transport::Errors::NotFound)
     end

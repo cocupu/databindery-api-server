@@ -6,7 +6,7 @@ describe Node do
   let(:model) { FactoryGirl.create(:model, pool:pool) }
 
   describe '#import' do
-    it "should import all of the records in a source array" do
+    it "should import all of the records in a source array (into SQL database)" do
       count_before = Node.count
       source_nodes = (1..10).to_a.map { generate_node_of_size(500) }
       Node.import(source_nodes)
@@ -14,14 +14,15 @@ describe Node do
     end
   end
   describe '#import_nodes' do
-    it "should import all of the records in a source array" do
+    it "should import all of the records in a source array (into the index)" do
       count_before = Node.count
       source_nodes = (1..2).to_a.map { generate_node_of_size(500) }
-      source_nodes.each do |node|
-        expect(Bindery::Persistence::ElasticSearch::Node::NodeIndexer).to receive(:perform_async).with(node.persistent_id, index: node.pool.id, type:node.model.id, body:node.as_elasticsearch)
-      end
+      allow(Bindery::Persistence::ElasticSearch::Node::NodeIndexer).to receive(:perform_async)
       Node.import_nodes(source_nodes)
       expect(Node.count).to eq(count_before + source_nodes.count)
+      source_nodes.each do |node|
+        expect(Bindery::Persistence::ElasticSearch::Node::NodeIndexer).to have_received(:perform_async).with(node.latest_version_id)
+      end
     end
   end
   describe '#bulk_import_data' do

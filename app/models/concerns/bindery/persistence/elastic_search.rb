@@ -13,7 +13,12 @@ module Bindery::Persistence::ElasticSearch
   def self.add_documents_to_index(documents)
     documents = Array.wrap(documents)
     documents.each do |doc|
-      Bindery::Persistence::ElasticSearch::Node::NodeIndexer.perform_async(doc['id'], index: doc['_bindery_pool'], type:doc['_bindery_model'], body:doc)
+      if doc["_bindery_node_version"].nil?
+        logger.warn("indexing a document into elasticsearch without a node_version_id")
+        Bindery::Persistence::ElasticSearch.client.index(id: doc['id'], index: doc['_bindery_pool'], type: doc['_bindery_model'], body: doc)
+      else
+        Bindery::Persistence::ElasticSearch::Node::NodeIndexer.perform_async(doc["_bindery_node_version"])
+      end
     end
   end
 

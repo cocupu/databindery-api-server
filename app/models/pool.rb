@@ -149,17 +149,19 @@ class Pool < ActiveRecord::Base
   def update_index
     failed_nodes = []
     node_pids.each do |node_pid|
-      n = Node.latest_version(node_pid)
-      begin
-        n.update_index
-      rescue
-        failed_nodes << n
-      end
+      node_version_id = Node.latest_version_id(node_pid)
+      Bindery::Persistence::ElasticSearch::Node::NodeIndexer.perform_async(node_version_id)
+      # begin
+      #   n.update_index
+      #   Bindery::Persistence::ElasticSearch::Node::NodeIndexer.perform(node_version_id)
+      # rescue
+      #   failed_nodes << node_version_id
+      # end
     end
 
     # flash[:notice] ||= []
     # flash[:notice] << "Reindexed #{pool_head.count} nodes with #{failed_nodes.count} failures."
-    logger.info("Reindexed #{node_pids.count} nodes in Pool #{self.id} with #{failed_nodes.count} failures.")
+    logger.info("Reindexing #{node_pids.count} nodes in Pool #{self.id}.")
   end
 
   # Serialize the pool and it's access_controls to a basic datastruture.

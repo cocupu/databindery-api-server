@@ -38,6 +38,10 @@ module Bindery::Persistence::ElasticSearch::Node
     @adapter ||= Adapter.new(self)
   end
 
+  def update_index
+    NodeIndexer.perform_async(self.id)
+  end
+
   # Index-agnostic method for rendering the node as a document to be indexed.
   def as_index_document
     as_elasticsearch
