@@ -5,5 +5,6 @@ FactoryGirl.define do
     end
     provider 'email'
     password 'notblank'
+    confirmed_at Time.now
   end
 end
