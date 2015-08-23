@@ -1,7 +1,10 @@
 class ApplicationController < ActionController::API
   include ActionController::MimeResponds
+  include ActionController::HttpAuthentication::Basic
   include DeviseTokenAuth::Concerns::SetUserByToken
   include CanCan::ControllerAdditions  # Must explicitly include this because we're not inheriting from ActionController::Base
+
+  before_filter :http_basic_auth_for_the_lazy
 
   rescue_from CanCan::AccessDenied do |exception|
       if login_credential_signed_in?
@@ -56,5 +59,27 @@ class ApplicationController < ActionController::API
       @identity = @pool.owner
     end
   end
+
+  def http_basic_auth_for_the_lazy
+    if request.authorization
+      login_credential = authenticate(request) do |email, pass|
+        lc = LoginCredential.find_by_email(email)
+        lc.valid_password?(pass) ? lc : nil
+      end
+
+      if login_credential
+        @current_login_credential = login_credential
+      else
+        request_http_basic_authentication
+      end
+
+    end
+  end
+
+  # # Helper to decode credentials from HTTP.
+  # def decode_credentials
+  #   return [] unless request.authorization && request.authorization =~ /^Basic (.*)/m
+  #   Base64.decode64($1).split(/:/, 2)
+  # end
 
 end
