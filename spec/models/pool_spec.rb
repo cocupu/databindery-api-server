@@ -1,6 +1,9 @@
 require 'rails_helper'
 
 describe Pool do
+  let(:pool)  { Pool.new }
+  subject     { pool }
+
   it "should belong to an identity" do
     subject.short_name = 'short_name'
     subject.should_not be_valid
@@ -57,8 +60,8 @@ describe Pool do
     before do
       @exhibit1 = FactoryGirl.create(:exhibit)
       @exhibit2 = FactoryGirl.create(:exhibit)
-      subject.exhibits = [@exhibit1, @exhibit2]
-      subject.save
+      pool.exhibits = [@exhibit1, @exhibit2]
+      pool.save
     end
     it "should return the exhibits" do
       subject.perspectives.should == [subject.generated_default_perspective, @exhibit1, @exhibit2]
@@ -80,25 +83,25 @@ describe Pool do
       end
     end
     describe "generated_default_perspective" do
+      subject { pool.generated_default_perspective }
       before do
-        @model1 = FactoryGirl.create(:model, pool: subject)
+        @model1 = FactoryGirl.create(:model, pool: pool)
         @model1.fields << Field.create(:code=>'one', :name=>'One', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
         @model1.fields << Field.create(:code=>'two', :name=>'Two', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
         @model1.association_fields << FactoryGirl.create(:association, name: 'authors', label: "Authors", multivalue:true, references: 39)
         @model1.save
-        subject.models << @model1
+        pool.models << @model1
       end
-      it "should generate an Exhibit whose facet and index fields are all fields from all Models" do
-        e = subject.generated_default_perspective
-        e.should be_kind_of Exhibit
-        e.facets.should == subject.all_fields
-        e.index_fields.should == subject.all_fields
+      it "generates an Exhibit whose facet and index fields are all fields from all Models" do
+        expect(subject).to be_kind_of Exhibit
+        expect(subject.facets).to eq pool.all_fields
+        expect(subject.index_fields).to eq pool.all_fields
       end
-      it "should not merge duplicate fields" do
-        subject.stub(:all_fields).and_return([{"code"=>"collection_location", "name"=>"Collection Location"}, {"code"=>"date_from", "name"=>"Date from"}, {"name"=>"Date from", "type"=>"date", "uri"=>"", "code"=>"date_from"}, {"code"=>"date_to", "name"=>"Date to"}, {"name"=>"Date to", "type"=>"date", "uri"=>"", "code"=>"date_to"}])
-        e = subject.generated_default_perspective
-        e.facets.should == subject.all_fields
-        e.index_fields.should == subject.all_fields
+      it "does not merge duplicate fields" do
+        pool.stub(:all_fields).and_return([{"code"=>"collection_location", "name"=>"Collection Location"}, {"code"=>"date_from", "name"=>"Date from"}, {"name"=>"Date from", "type"=>"date", "uri"=>"", "code"=>"date_from"}, {"code"=>"date_to", "name"=>"Date to"}, {"name"=>"Date to", "type"=>"date", "uri"=>"", "code"=>"date_to"}])
+        e = pool.generated_default_perspective
+        expect(e.facets).to eq pool.all_fields
+        expect(e.index_fields).to eq pool.all_fields
       end
     end
   end
@@ -211,22 +214,24 @@ describe Pool do
 
   describe "all_fields" do
     before do
-      subject.save
-      @model1 = FactoryGirl.create(:model, pool: subject)
+      pool.save
+      @model1 = FactoryGirl.create(:model, pool: pool)
       @model1.fields << Field.create(:code=>'one', :name=>'One', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
       @model1.fields << Field.create(:code=>'two', :name=>'Two', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
       @model1.save
-      @model2 = FactoryGirl.create(:model, pool: subject)
+      @model2 = FactoryGirl.create(:model, pool: pool)
       @model2.fields << Field.create(:code=>'one', :name=>'One', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
       @model2.fields << Field.create(:code=>'three', :name=>'Three', :type=>'TextField', :uri=>'dc:name', :multivalue=>false)
       @model2.save
-      subject.models << @model1
-      subject.models << @model2
+      pool.models << @model1
+      pool.models << @model2
     end
-    it "should return all fields from all models, removing duplicates" do
-      #subject.all_fields.count.should == 5
-      codes = subject.all_fields.map {|f| f.code }
-      ["model_name","description","one","two","three"].each {|code| codes.should include(code)}
+    let(:all_fields) { pool.all_fields }
+    let(:codes)   { subject.map {|f| f.code } }
+    subject       { all_fields }
+    it "returns all fields from all models including FileEntity, removing duplicates" do
+      ["model_name","description","one","two","three"].each {|code| expect(codes).to include(code)}
+      Model.file_entity.fields.each {|file_entity_field| expect(all_fields).to include(file_entity_field)}
     end
   end
 

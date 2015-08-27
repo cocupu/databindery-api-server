@@ -46,6 +46,11 @@ describe Api::V1::PoolDataController do
           get :index, :pool_id=>my_pool, :q=>'bazaar'
           expect(subject.query_builder.as_json["body"]["query"]).to eq({query_string:{query:"bazaar"}}.as_json)
         end
+        it "defaults to returning all fields, including FileEntity fields" do
+          my_model # make sure my_pool has the model set up
+          get :index, :pool_id=>my_pool, :q=>'bazaar'
+          expect(subject.query_builder.as_json["body"]["fields"]).to eq(["_id", "_bindery_pool", "_bindery_model", "model_name", "bucket", "content_type", "description", "file_entity_type", "file_name", "file_size", "mime_type", "storage_location_id"])
+        end
         it "supports string queries together with facet queries" do
           get :index, :pool_id=>my_pool, q:"Grand", f: {"location" => "Istanbul"}
           expect(subject.query_builder.as_json["body"]["query"]).to eq({bool:{must:[{query_string:{query:"Grand"}},{match:{"location"=>"Istanbul"}}]}}.as_json)

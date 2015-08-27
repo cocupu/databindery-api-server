@@ -87,7 +87,7 @@ class Pool < ActiveRecord::Base
   end
 
   def all_fields
-    [Field.canonical("model_name")] + self.models.map {|m| m.fields.where('type != ? OR type IS null',OrderedListAssociation)}.flatten.sort{|x, y| x.code <=> y.code}
+    [Field.canonical("model_name")] + models_including_file_entity.map {|m| m.fields.where('type != ? OR type IS null',OrderedListAssociation)}.flatten.sort{|x, y| x.code <=> y.code}
   end
   
   # Returns all the associations from all Models in this Pool
@@ -170,5 +170,11 @@ class Pool < ActiveRecord::Base
     h['identity'] = owner.id
     h['access_controls'] = access_controls.map {|ac| {'identity' => ac.identity.id, 'access' => ac.access  }}
     h
+  end
+
+  private
+
+  def models_including_file_entity
+    models + [Model.file_entity]
   end
 end

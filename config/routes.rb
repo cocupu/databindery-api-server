@@ -18,6 +18,7 @@ Rails.application.routes.draw do
           match 'files' => 'nodes#attach_file', :via=>:post
         end
         resources :models, except:[:new,:edit]
+        resources :fields, except:[:new,:edit]
         resources :audience_categories, except:[:new,:edit] do
           resources :audiences, except:[:new,:edit]
         end
