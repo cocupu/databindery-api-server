@@ -26,6 +26,9 @@ describe Ability do
         before do
           AccessControl.create!(identity: @non_owner, pool: pool, access: 'READ')
         end
+        it "are queryable" do
+          expect( ability.can?(:query, pool) ).to be_truthy
+        end
         it "are readable" do
           ability.can?(:read, pool).should be_truthy
         end
@@ -38,6 +41,9 @@ describe Ability do
         before do
           AccessControl.create!(identity: @non_owner, pool: pool, access: 'EDIT')
         end
+        it "are queryable" do
+          expect( ability.can?(:query, pool) ).to be_truthy
+        end
         it "are readable" do
           ability.can?(:read, pool).should be_truthy
         end
@@ -46,11 +52,35 @@ describe Ability do
           ability.can?(:update, pool).should be_truthy
         end
       end
-      it "are not readable" do
-        ability.can?(:read, pool).should_not be_truthy
+      describe "with audience memberships" do
+        let(:audience) do
+          audience_category = pool.audience_categories.create
+          audience_category.audiences.create
+        end
+        before do
+          audience.members << @non_owner
+          audience.save
+        end
+        it "are queryable" do
+          expect( ability.can?(:query, pool) ).to be_truthy
+        end
+        it "are not readable" do
+          ability.can?(:read, pool).should_not be_truthy
+        end
+        it "are not updatable" do
+          ability.can?(:update, pool).should_not be_truthy
+        end
       end
-      it "are not updatable" do
-        ability.can?(:update, pool).should_not be_truthy
+      context "by default" do
+        it "are not queryable" do
+          expect( ability.can?(:query, pool) ).to_not be_truthy
+        end
+        it "are not readable" do
+          ability.can?(:read, pool).should_not be_truthy
+        end
+        it "are not updatable" do
+          ability.can?(:update, pool).should_not be_truthy
+        end
       end
     end
 

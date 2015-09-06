@@ -49,11 +49,13 @@ class ApplicationController < ActionController::API
   #    Or in a before_filter:
   #     before_filter -> { load_pool :id_param => :my_id }, :only=>[:show, :update, :fields]
   def load_pool(opts={})
-    id_param = opts.fetch(:id_param, :pool_id)
-    if /\A[-+]?\d+\z/ === params[id_param].to_s
-      @pool = Pool.find(params[id_param])
-    elsif params[id_param]
-      @pool = Pool.find_by_short_name(params[id_param])
+    if @pool.nil?
+      id_param = opts.fetch(:id_param, :pool_id)
+      if /\A[-+]?\d+\z/ === params[id_param].to_s
+        @pool = Pool.find(params[id_param])
+      elsif params[id_param]
+        @pool = Pool.find_by_short_name(params[id_param])
+      end
     end
     if @pool
       @identity = @pool.owner
@@ -61,6 +63,7 @@ class ApplicationController < ActionController::API
   end
 
   def http_basic_auth_for_the_lazy
+
     if request.authorization
       login_credential = authenticate(request) do |email, pass|
         lc = LoginCredential.find_by_email(email)

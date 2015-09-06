@@ -12,7 +12,10 @@ class Ability
       # The owner can read/edit/update it
       can [:read, :update], [Pool], :owner_id => identity.id
       can :read, Pool do |pool|
-        pool.access_controls.where(:identity_id => identity.id ).any? || pool.audiences_for_identity(identity).any?
+        pool.access_controls.where(:identity_id => identity.id ).any?
+      end
+      can :query, Pool do |pool|
+        can?(:read, pool) || pool.audiences_for_identity(identity).any?
       end
       can :update, Pool do |pool|
         pool.access_controls.where(:identity_id => identity.id, :access=>'EDIT' ).any?

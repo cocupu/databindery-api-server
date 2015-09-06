@@ -39,6 +39,12 @@ Rails.application.routes.draw do
           end
         end
 
+        member do
+          get '_search', to: 'elastic_search_proxy#index'
+          post '_search', to: 'elastic_search_proxy#index'
+        end
+
+
         get 'exhibits/:exhibit_id' => 'exhibit_data#index', :as => 'exhibit_data'
         get 'exhibits/:exhibit_id/facet/:id' => 'exhibit_data#facet', :as => :exhibit_facet
         resources :exhibits, except:[:show,:new,:edit]

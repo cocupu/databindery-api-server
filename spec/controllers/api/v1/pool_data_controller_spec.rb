@@ -173,6 +173,7 @@ describe Api::V1::PoolDataController do
         sign_in identity.login_credential
       end
       it "should be success" do
+        pending "REMOVE? (show is not implemented)"
         get :show, id: @node.persistent_id, :pool_id=>my_pool
         response.should be_successful
       end
@@ -180,10 +181,12 @@ describe Api::V1::PoolDataController do
     describe "when not signed in" do
       describe "show" do
         it "should not be successful" do
+          pending "REMOVE? (show is not implemented)"
           get :show, id: @node.persistent_id,  :pool_id=>my_pool
           expect(response).to respond_unauthorized
         end
         it "should return 401 to json API" do
+          pending "REMOVE? (show is not implemented)"
           get :show, id: @node.persistent_id,  :pool_id=>my_pool, :format=>:json
           response.code.should == "401"     
         end

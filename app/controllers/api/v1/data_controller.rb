@@ -9,7 +9,7 @@ class Api::V1::DataController < ApplicationController
   # This pattern for preventing bleed-over also applies to subclasses
   self.query_logic += [:apply_user_query, :apply_facet_config_to_query, :apply_index_fields_to_query, :apply_sorting, :apply_audience_filters]
 
-  before_filter :load_pool
+  prepend_before_filter :load_pool
   load_and_authorize_resource instance_name: :node, class: Node, find_by: :persistent_id, only: [:show]
 
   before_filter :set_perspective
@@ -20,10 +20,6 @@ class Api::V1::DataController < ApplicationController
   def index
     (@response, @document_list) = get_search_results
     render json: json_response
-  end
-
-  def show
-    render json: {"foo"=>"bar"}
   end
 
   private
@@ -154,6 +150,10 @@ class Api::V1::DataController < ApplicationController
       end
       params[:sort] = sort_entries
     end
+  end
+
+  def require_query_permission
+    authorize! :query, @pool
   end
 
 

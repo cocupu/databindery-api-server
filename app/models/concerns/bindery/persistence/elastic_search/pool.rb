@@ -114,6 +114,7 @@ module Bindery::Persistence::ElasticSearch::Pool
       return query_builder
     end
 
+    # Ensures that the query is directed at this pool's index
     def search(query_params)
       Rails.logger.debug "[elasticsearch query] #{query_builder(query_params).as_query}"
       response = client.search query_builder(query_params).as_query
