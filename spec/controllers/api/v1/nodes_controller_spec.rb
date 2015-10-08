@@ -278,18 +278,22 @@ describe Api::V1::NodesController do
   end
 
   describe "import" do
+    let(:r1) { { first_name_field.to_param => 'A val' } }
+    let(:r2) { { first_name_field.to_param => 'Another val' } }
     before do
       sign_in identity.login_credential
     end
     it "should import nodes from an array of data records" do
-      r1 = { first_name_field.to_param => 'A val' }
-      r2 = { first_name_field.to_param => 'Another val' }
       nodes_before = Node.count
       post :import, :data=>[r1, r2], :model_id=>model, pool_id: pool, identity_id: identity.short_name
       expect(Node.count).to eq(nodes_before + 2)
       most_recent_node = Node.order(id: :desc).first
       expect(most_recent_node.data).to eq(r2)
       expect(Node.find(most_recent_node.id-1).data).to eq(r1)
+    end
+    it "allows you to specify a key for matching to existing records" do
+      expect(Node).to receive(:bulk_import_data).with([r1, r2], pool, model, key:"key-to-match-on")
+      post :import, :data=>[r1, r2], :model_id=>model, pool_id: pool, key: "key-to-match-on"
     end
   end
 

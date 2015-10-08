@@ -15,6 +15,24 @@ module Bindery::Node::Finders
       end
       return node
     end
+
+    def self.query_elasticsearch(pool:, model:, query:, fields: nil)
+      elasticsearch = Bindery::Persistence::ElasticSearch.client
+
+      must_match_queries = [{'_bindery_model'=>model.id},{'_bindery_format'=>"Node"}]
+      query.each_pair do |key, value|
+        must_match_queries << {key => value}
+      end
+      query =  { bool: {must: must_match_queries.map{|mmq| {match:mmq } }}}
+      search_body = { query: query }
+      search_body[:fields] = fields if fields
+      search_response = elasticsearch.search index: pool.to_param, body: search_body
+      if fields
+        search_response["hits"]["hits"].map {|hit| hit["fields"]}
+      else
+        search_response["hits"]["hits"].map {|hit| hit["_source"]}
+      end
+    end
   end
 
   # TODO grab this info out of solr.

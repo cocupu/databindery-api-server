@@ -2,10 +2,19 @@ module Bindery::Node::Importing
   extend ActiveSupport::Concern
 
   module ClassMethods
-    def bulk_import_data(records, pool, model)
+    def bulk_import_data(records, pool, model, key:nil)
       nodes = records.map do |record|
         node = Node.new(pool:pool, model:model, data:record)
-        node.generate_uuid
+        if key && record[key]
+          hits = Node.query_elasticsearch(pool:pool, model:model, query:{key => record[key]}, fields:['id'])
+          if hits.empty? || hits.first["id"].nil?
+            node.generate_uuid
+          else
+            node.persistent_id = hits.first["id"]
+          end
+        else
+          node.generate_uuid
+        end
         node
       end
       self.import_nodes(nodes)

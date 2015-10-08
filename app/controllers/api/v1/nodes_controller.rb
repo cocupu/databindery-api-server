@@ -96,7 +96,7 @@ class Api::V1::NodesController < Api::V1::DataController
   def import
     authorize! :create, Node
     model = @pool.models.find(params[:model_id])
-    @import_results = Node.bulk_import_data(params[:data], @pool, model)
+    @import_results = Node.bulk_import_data(params[:data], @pool, model, key: params[:key])
     render :json=>@import_results
   end
   

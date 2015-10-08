@@ -8,18 +8,38 @@ describe Node do
   let(:last_name_field) { FactoryGirl.create :last_name_field }
   let(:title_field) { FactoryGirl.create :title_field }
   let(:model) do
-    FactoryGirl.create(:model,
+    FactoryGirl.create(:model, pool: pool,
                        fields: [first_name_field, last_name_field, title_field],
                        label_field: last_name_field, association_fields_attributes: [{name: 'authors', references: ref.id}])
   end
   let(:ref) do
-    FactoryGirl.create(:model,
+    FactoryGirl.create(:model, pool: pool,
                        fields: [first_name_field, last_name_field, title_field],
                        label_field: last_name_field)
   end
 
   before do
     subject.model = model
+  end
+
+  describe "query_elasticsearch", elasticsearch:true, sidekiq: :inline do
+    let(:mahatma) { FactoryGirl.create(:node, pool: pool, model: model, data:{first_name:"Mahatma", last_name:"Gandhi"}) }
+    let(:indira) { FactoryGirl.create(:node, pool: pool, model: model, data:{first_name:"Indira", last_name:"Gandhi"}) }
+    before do
+      mahatma
+      indira
+      sleep 1
+    end
+    it "queries the appropriate index and returns all hits" do
+      result = Node.query_elasticsearch(pool:pool, model:model, query:{last_name: "Gandhi"})
+      ids = result.map {|hit| hit["id"]}
+      expect(ids).to contain_exactly(mahatma.persistent_id, indira.persistent_id)
+      expect(result.first.keys).to include(*mahatma.as_elasticsearch.keys.map{|k| k.to_s})
+    end
+    it "allows you to restrict which fields to return" do
+      result = Node.query_elasticsearch(pool:pool, model:model, query:{last_name: "Gandhi"}, fields:['id','first_name'])
+      expect(result).to include({'first_name' => ['Mahatma'], "id" => [mahatma.persistent_id]}, {'first_name' => ['Indira'], "id" => [indira.persistent_id]})
+    end
   end
 
   describe "#find_by_identifier" do
