@@ -272,6 +272,9 @@ network.host: 127.0.0.1
 # nodes during initial recovery, replica allocation, rebalancing,
 # or when adding and removing nodes.
 
+cluster.routing.allocation.disk.watermark.low: "15gb"
+cluster.routing.allocation.disk.watermark.high: "10gb"
+
 # Set the number of concurrent recoveries happening on a node:
 #
 # 1. During the initial recovery

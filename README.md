@@ -14,6 +14,9 @@ This is the main DataBindery code base.
 # TL;DR
 
 ## Download and Run Tests
+
+The `rake elastic_search:testcluster:start` task runs a disposable elasticsearch cluster on port 9250.
+
 ```
 git clone git@github.com/cocupu/databindery-api-server
 cd databindery-api-server
