@@ -56,7 +56,7 @@ module Bindery::Persistence::ElasticSearch::Pool
     # Creates elasticsearch index and and alias (pool.to_param) that points to the index
     def create_artifacts
       # Bindery::Persistence::ElasticSearch::Pool.create_elasticsearch_artifacts(self.to_param)
-      index_name = create_index(pool.to_param)
+      index_name = create_index
       set_alias(index_name)
     end
 
@@ -76,18 +76,74 @@ module Bindery::Persistence::ElasticSearch::Pool
     # Creates an elasticsearch index
     # Defaults to naming indices {pool.id}_{Time.now.strftime('%Y-%m-%d_%H:%m:%S')}
     # @example Creating an index for pool 1862
-    #   create_elasticsearch_index
-    #   => 1862_2015-01-29_15:01:39
-    def create_index(pool_identifier, opts={})
-      suffix = opts.fetch(:suffix, "_" + Time.now.strftime('%Y-%m-%d_%H:%m:%S'))
-      index_name = opts.fetch(:name, pool_identifier + suffix )
+    #   pool.__elasticsearch__.create_index
+    #   => "1862_2015-01-29_15:01:39"
+    # @example Specify an index_name
+    #   pool.__elasticsearch__.create_index(index_name:"foo-index")
+    #   => "foo-index"
+    # @example Specify a base_name
+    #   pool.__elasticsearch__.create_index(base_name:"foo-index")
+    #   => "foo-index_2015-01-29_15:01:39"
+    # @example Specify a suffix
+    #   pool.__elasticsearch__.create_index(suffix:"my-suffix")
+    #   => "1862_my-suffix"
+    def create_index(suffix: nil, base_name: nil, index_name: nil)
+      unless index_name
+        suffix = "_" + Time.now.strftime('%Y-%m-%d_%H:%m:%S') unless suffix
+        base_name =  pool.to_param unless base_name
+        index_name = base_name + suffix
+      end
       client.indices.create index: index_name
       return index_name
     end
 
+    # Returns the name of the index that the live alias currently points to
+    def current_live_index
+      get_aliases(scope: :live).keys.first
+    end
+
+    def delete_index(index_name)
+      client.indices.delete index: index_name
+    end
+
+    def delete_all_indices
+      get_aliases(scope: :all).keys do |index_name|
+        delete_index(index_name)
+      end
+    end
+
     # Sets this pool's elasticsearch alias to point to the index named :index_name
     def set_alias(index_name)
+      old_aliases = get_aliases
       client.indices.put_alias name: pool.to_param, index: index_name
+      client.indices.put_alias name: pool.to_param + "-all" , index: index_name
+      old_aliases.keys.each {|index_name| remove_alias(index_name)}
+    end
+
+    def get_aliases(scope: :live)
+      found_aliases = {}
+      begin
+        case scope
+          when :live
+            found_aliases = client.indices.get_alias name: pool.to_param
+          when '_all', :all
+            found_aliases = client.indices.get_alias name: pool.to_param
+            found_aliases.merge!(client.indices.get_alias name: pool.to_param + '-all')
+        end
+      rescue Elasticsearch::Transport::Transport::Errors::NotFound
+        found_aliases
+      end
+      found_aliases
+    end
+
+    def remove_alias(index_name, scope: :live)
+      case scope
+        when :live
+          client.indices.delete_alias name: pool.to_param, index: index_name
+        when '_all', :all
+          client.indices.delete_alias name: pool.to_param, index: index_name
+          client.indices.delete_alias name: pool.to_param, index: index_name + '_all'
+      end
     end
 
     def get

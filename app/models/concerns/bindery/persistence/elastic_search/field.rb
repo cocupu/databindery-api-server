@@ -6,17 +6,21 @@ module Bindery::Persistence::ElasticSearch::Field
 
   # Core elasticsearch datatypes: string, number, boolean, date
   def elasticsearch_datatype
-    case self.class
-      when Field,TextArea,TextField
+    case self
+      when TextArea,TextField
         'string'
-      when NumberField, IntegerField
-        'number'
+      when IntegerField
+        'integer'
+      when NumberField
+        'float'
       when BooleanField
         'boolean'
       when DateField
         'date'
       when AttachmentField
         'attachment'
+      when ArrayField
+        'string'
       else
         'string'
     end

@@ -44,6 +44,9 @@ FactoryGirl.define do
   factory :date_field, class:DateField do
     name "important_date"
   end
+  factory :datetime_field, class:DateTimeField do
+    name "important_time"
+  end
   factory :integer_field, class:IntegerField do
     name "a_number"
   end

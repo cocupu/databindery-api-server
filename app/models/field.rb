@@ -51,11 +51,17 @@ class TextField < Field;end
 class TextArea < Field;end
 class NumberField < Field;end
 class IntegerField < NumberField;end
+class ArrayField < Field;end
 class BooleanField < Field;end
 class AttachmentField < Field;end
-class DateField < Field
+class DateTimeField < Field
   def sanitize(value)
     Time.parse(value).utc.iso8601 unless value.nil?
+  end
+end
+class DateField < Field
+  def sanitize(value)
+    Date.parse(value).iso8601 unless value.nil?
   end
 end
 class OrderedListAssociation < Field

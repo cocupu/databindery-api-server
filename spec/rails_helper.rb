@@ -85,7 +85,7 @@ def sign_in(login_credential)
 end
 
 def stub_elasticsearch
-  indices_double = double("indices", put_mapping:true, delete_mapping:true, get_mapping:{}, create:true, put_alias:true )
+  indices_double = double("indices", put_mapping:true, delete_mapping:true, get_mapping:{}, create:true, put_alias:true, get_alias: {} )
   elasticsearch_double = double('elasticsearch client', indices:indices_double, search:{"hits"=>{"hits"=>[]}})
   allow(Bindery::Persistence::ElasticSearch).to receive(:client).and_return(elasticsearch_double)
 end

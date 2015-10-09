@@ -2,8 +2,12 @@ require  'rails_helper'
 
 describe Bindery::Persistence::ElasticSearch::Pool do
 
-  subject{ FactoryGirl.create(:pool) }
+  let(:pool) { FactoryGirl.create(:pool) }
+  subject { pool }
   let(:elasticsearch) { Bindery::Persistence::ElasticSearch.client }
+  let(:new_index_name) { adapter.create_index(suffix: '-new') }
+  let(:live_alias) { adapter.get_aliases(scope: :live) }
+  let(:all_aliases) { adapter.get_aliases(scope: :all) }
 
   it "creates a corresponding elasticsearch index", elasticsearch:true do
     expect(elasticsearch.indices.get(index: "#{subject.to_param}*", expand_wildcards: 'open').count).to eq 1
@@ -12,6 +16,51 @@ describe Bindery::Persistence::ElasticSearch::Pool do
   # See: http://www.elasticsearch.org/blog/changing-mapping-with-zero-downtime/
   it "uses aliases, allowing for indexes to be rebuilt and swapped transparently", elasticsearch:true do
     expect( elasticsearch.indices.get_alias(index: "#{subject.to_param}*", name: subject.to_param).count).to eq 1
+  end
+
+  describe '__elasticsearch__', elasticsearch:true do
+    let(:adapter) { pool.__elasticsearch__ }
+
+    describe 'current_live_index' do
+      subject { adapter.current_live_index }
+      it 'returns the name of the index that the live alias currently points to' do
+        expect(subject).to_not be_empty
+        expect(subject).to eq adapter.get_aliases(scope: :live).keys.first
+      end
+    end
+
+    describe 'set_alias' do
+      before do
+        adapter.set_alias(new_index_name)
+      end
+      it 'points the live alias to the given index_name and adds that index to _all alias' do
+        expect(adapter.current_live_index).to eq new_index_name
+        expect(adapter.get_aliases(scope: :all).keys).to include(new_index_name)
+      end
+    end
+
+    describe 'get_aliases' do
+      before do
+        adapter.set_alias(new_index_name)
+      end
+      it 'returns the aliases within scope' do
+        expect(live_alias).to eq({"#{pool.to_param}-new"=>{"aliases"=>{pool.to_param=>{}}}})
+        expect(adapter.get_aliases).to eq live_alias
+        expect(all_aliases.keys.count).to eq 2
+        expect(all_aliases.keys).to include("#{pool.to_param}-new")
+      end
+    end
+
+    describe 'delete_index' do
+      let(:deleted_index_name) { adapter.current_live_index }
+      before do
+        adapter.delete_index(deleted_index_name)
+      end
+      it 'deletes the index and its aliases' do
+        expect(adapter.get_aliases).to be_empty
+        expect{ elasticsearch.indices.get(index: deleted_index_name).count }.to raise_error(Elasticsearch::Transport::Transport::Errors::NotFound)
+      end
+    end
   end
 
   describe 'destroy' do

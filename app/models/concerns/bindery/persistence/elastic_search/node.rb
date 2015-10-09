@@ -61,7 +61,13 @@ module Bindery::Persistence::ElasticSearch::Node
   end
 
   def data_as_elasticsearch
-    data
+    sanitized_fields = {}
+    model.fields.where(type:['DateField','DateTimeField']).each do |field|
+      if data[field.to_param]
+        sanitized_fields[field.to_param] = field.sanitize(data[field.to_param])
+      end
+    end
+    data.merge(sanitized_fields)
   end
 
   # Add all the associated models (denormalize) onto this record
