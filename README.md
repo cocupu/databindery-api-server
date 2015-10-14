@@ -51,6 +51,22 @@ If you have elasticsearch installed (ie. via `brew install elasticsearch`) you c
 elasticsearch --config=./elasticsearch-dev.yml
 ```
 
+# Dat
+
+## Serving Dat Repositories
+
+### Dependencies for Dat support
+* dat
+* npm
+* nginx (for running/managing dat servers)
+
+Run npm install to get the taco-nginx script downloaded into node_modules
+```
+npm install
+```
+
+
+
 # Generated API Documentation
 The API is self-documenting using the [swagger-ui](https://github.com/richhollis/swagger-docs) rails gem.  These docs must be re-built whenever the API changes.
 

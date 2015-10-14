@@ -1,0 +1,25 @@
+{
+  "name": "databindery-api-server",
+  "version": "0.0.1",
+  "description": "Internal dependencies of the DataBindery API server",
+  "main": "index.js",
+  "dependencies": {
+    "dat": "^7.1.2",
+    "dat-core": "^6.0.2",
+    "taco-nginx": "^1.9.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cocupu/databindery-api-server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cocupu/databindery-api-server/issues"
+  },
+  "homepage": "https://github.com/cocupu/databindery-api-server#readme"
+}

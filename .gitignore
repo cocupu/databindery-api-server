@@ -12,6 +12,7 @@ public/api-docs/api/
 /.bundle
 vendor/assets/bower_components/
 bower_components
+node_modules
 
 # Ignore the default SQLite database.
 /db/*.sqlite3
@@ -24,6 +25,9 @@ bower_components
 
 # Generate jetty, don't store in git
 jetty/
+
+# don't store dat repositories
+dat
 
 # Don't store AWS credentials
 config/s3.yml
