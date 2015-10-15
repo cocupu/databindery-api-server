@@ -24,9 +24,9 @@ bundle install
 cp config/aws.yml.example config/aws.yml  # ... then put valid AWS credentials into this file ...
 rake db:create
 rake db:migrate
-rake elastic_search:testcluster:start
+rake elasticsearch:testcluster:start
 rake spec
-rake elastic_search:testcluster:stop
+rake elasticsearch:testcluster:stop
 rake swagger:docs
 open http://localhost:3000/api-docs
 ```

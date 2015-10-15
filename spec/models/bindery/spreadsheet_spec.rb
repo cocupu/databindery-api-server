@@ -6,8 +6,8 @@ describe Bindery::Spreadsheet do
     subject.should_not be_valid
     subject.errors.full_messages.should == ["Pool can't be blank"]
     expect(subject.model).to eq Model.file_entity
-    subject.pool = Pool.create
-    subject.should be_valid
+    subject.pool = SqlBackedPool.create
+    expect(subject).to be_valid
   end
 
   describe "file binding lookups" do

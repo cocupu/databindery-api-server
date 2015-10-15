@@ -2,27 +2,13 @@ class Pool < ActiveRecord::Base
   include ActiveModel::ForbiddenAttributesProtection
   include Bindery::Identifiable
   include Bindery::Persistence::ElasticSearch::Pool
-  
+
   before_create :generate_uuid
   before_destroy :delete_bucket
   belongs_to :owner, class_name: "Identity"
   validates :owner, presence: true
   has_many :exhibits, :dependent => :destroy
   belongs_to :chosen_default_perspective, class_name: "Exhibit"
-  has_many :nodes, :dependent => :destroy do
-    def head
-      pool_pids = map {|n| n.persistent_id}.uniq
-      return pool_pids.map {|pid| Node.latest_version(pid)}
-    end
-  end
-  # A more efficient way to load complete head state of the pool
-  def nodes_head(args = {})
-    return node_pids.map {|pid| Node.latest_version(pid)}
-  end
-
-  def node_pids
-    ActiveRecord::Base.connection.execute("SELECT DISTINCT persistent_id FROM nodes WHERE pool_id = #{self.id}").values
-  end
 
   has_many :models, :dependent => :destroy
   has_many :mapping_templates, :dependent => :destroy
@@ -144,24 +130,6 @@ class Pool < ActiveRecord::Base
     rescue SocketError => e
       logger.warn("Could not delete bucket associated with Pool #{id}.  Looks like the connection to AWS failed? #{e.message}")
     end
-  end
-
-  def update_index
-    failed_nodes = []
-    node_pids.each do |node_pid|
-      node_version_id = Node.latest_version_id(node_pid)
-      Bindery::Persistence::ElasticSearch::Node::NodeIndexer.perform_async(node_version_id)
-      # begin
-      #   n.update_index
-      #   Bindery::Persistence::ElasticSearch::Node::NodeIndexer.perform(node_version_id)
-      # rescue
-      #   failed_nodes << node_version_id
-      # end
-    end
-
-    # flash[:notice] ||= []
-    # flash[:notice] << "Reindexed #{pool_head.count} nodes with #{failed_nodes.count} failures."
-    logger.info("Reindexing #{node_pids.count} nodes in Pool #{self.id}.")
   end
 
   # Serialize the pool and it's access_controls to a basic datastruture.

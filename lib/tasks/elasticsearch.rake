@@ -1,7 +1,7 @@
 begin
   require 'elasticsearch/extensions/test/cluster'
 
-  namespace :elastic_search do
+  namespace :elasticsearch do
     namespace :testcluster do
       desc 'Start the elasticsearch test cluster'
       task :start do

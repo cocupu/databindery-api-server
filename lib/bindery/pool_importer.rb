@@ -26,9 +26,9 @@ module Bindery
       if opts[:force_create_new]
         selected_attributes.delete('persistent_id') unless Pool.find_by_persistent_id(selected_attributes['persistent_id']).nil?
         selected_attributes.delete('short_name') unless Pool.find_by_short_name(selected_attributes['short_name']).nil?
-        return Pool.create(selected_attributes)
+        return SqlBackedPool.create(selected_attributes)
       else
-        return Pool.find_or_create_by(selected_attributes)
+        return SqlBackedPool.find_or_create_by(selected_attributes)
       end
     end
 

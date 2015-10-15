@@ -43,6 +43,9 @@ gem 'aws-ses', '~> 0.4.4', require: 'aws/ses'
 # Data Import and Manipulations
 gem 'roo', "~> 1.12.2"
 
+# dat repositories
+gem 'dat', github:'databindery/dat-ruby'
+
 # Misc
 gem 'uuid'
 gem 'jbuilder'

@@ -117,16 +117,16 @@ describe Node do
   it "should have a model" do
     model = Model.create
     instance = Node.new
-    instance.model=model
-    instance.model.should == model
+    instance.model = model
+    expect(instance.model).to eq model
   end
   it "should not be valid unless it has a model and pool" do
     instance = Node.new()
     instance.should_not be_valid
     instance.model = Model.create
     instance.should_not be_valid
-    instance.pool = Pool.create
-    instance.should be_valid
+    instance.pool = SqlBackedPool.create
+    expect(instance).to be_valid
   end
 
   describe "with data" do

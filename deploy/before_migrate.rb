@@ -1,5 +1,16 @@
-deploy_path = node['deploy']['databindery_api_server']['deploy_to']
+app_config = node[:deploy][:databindery_api_server]
+deploy_path = app_config[:deploy_to]
 local_templates_path = "#{release_path}/deploy/templates"
+
+# Imitating #npm_install method from https://github.com/aws/opsworks-cookbooks/blob/b0b56ff404adea5ef6969a10d480b37b8fc4d7f5/opsworks_nodejs/libraries/nodejs_configuration.rb
+if ::File.exists?("#{release_path}/package.json")
+  npm_install_options = node[:opsworks_nodejs][:npm_install_options] ? node[:opsworks_nodejs][:npm_install_options] : 'install'
+  Chef::Log.info("package.json detected. Running npm install.")
+  Chef::Log.info(%x(sudo su #{app_config[:user]} -c 'cd #{release_path} && npm #{npm_install_options}'))
+else
+  Chef::Log.info("No package.json detected at #{release_path}/package.json. Skipping npm install.")
+end
+
 
 #
 # Elasticsearch

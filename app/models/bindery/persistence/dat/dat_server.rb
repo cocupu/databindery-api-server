@@ -1,6 +1,9 @@
+module Bindery
+  module Persistence
+    module Dat
 # Wrapper for starting, stopping, and checking on the daemon for a given
 # dat repository's server
-class DatServer
+class Server
 
   attr_accessor :server_name, :http_port, :dat_repository, :pid_file
 
@@ -19,7 +22,7 @@ class DatServer
   def start
     # Example of the commmand that is run
     # command = "/Users/matt/Develop/bindery/databindery-api-server/node_modules/.bin/taco-nginx --name foo --http-port 8080 --https-port 8443 dat serve"
-    command = "#{taco_nginx_path} --name #{server_name} --http-port #{http_port} --https-port 8443 dat serve"
+    command = "#{taco_nginx_path} --name #{server_name} --http-port #{http_port} --https-port 8443 #{dat_bin_path} serve"
     pid = Process.spawn(command, {chdir: dat_repository.dir, out: @log_file, err: @log_file})
     File.open(@pid_file, 'w') { |file| file.write(pid) }
     pid.to_s
@@ -97,6 +100,10 @@ class DatServer
     File.join(Rails.root, 'node_modules/.bin/taco-nginx')
   end
 
+  def dat_bin_path
+    'dat'
+  end
+
   def setup_env
     FileUtils.mkdir_p('tmp/pids/dat_servers')
     FileUtils.touch('log/dat_servers.log')
@@ -114,4 +121,7 @@ class DatServer
     end
   end
 
+end
+    end
+  end
 end

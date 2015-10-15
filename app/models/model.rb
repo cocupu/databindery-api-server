@@ -36,7 +36,7 @@ class Model < ActiveRecord::Base
   # @example model.nodes_head(pool:23)
   def nodes_head(args = {})
     if args.has_key?(:pool)
-      if args[:pool].instance_of?(Pool)
+      if args[:pool].instance_of?(SqlBackedPool)
         pool_id = args[:pool].id
       else
         pool_id = args[:pool]

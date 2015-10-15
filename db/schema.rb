@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150124110436) do
+ActiveRecord::Schema.define(version: 20151019051934) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -162,13 +162,15 @@ ActiveRecord::Schema.define(version: 20150124110436) do
   create_table "pools", force: true do |t|
     t.string   "name"
     t.integer  "owner_id"
-    t.datetime "created_at",                    null: false
-    t.datetime "updated_at",                    null: false
+    t.datetime "created_at",                                              null: false
+    t.datetime "updated_at",                                              null: false
     t.integer  "head_id"
     t.string   "short_name"
     t.text     "description"
     t.integer  "chosen_default_perspective_id"
     t.string   "persistent_id"
+    t.string   "type",                          default: "SqlBackedPool"
+    t.string   "dat_location"
   end
 
   add_index "pools", ["short_name"], name: "index_pools_on_short_name", unique: true, using: :btree

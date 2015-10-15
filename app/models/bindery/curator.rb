@@ -24,7 +24,7 @@ module Bindery
           identity = Identity.find_by_short_name(identity)
         end
       end
-      pool = Pool.find_by_short_name(pool) unless pool.instance_of?(Pool)
+      pool = Pool.find_by_short_name(pool) unless pool.kind_of?(SqlBackedPool)
       source_model = Model.find(source_model) unless source_model.instance_of?(Model)
       unless destination_model.instance_of?(Model)
         begin

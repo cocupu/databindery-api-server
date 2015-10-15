@@ -1,4 +1,11 @@
 GIT
+  remote: git://github.com/databindery/dat-ruby.git
+  revision: 017ab2dab1e74bc7fc399dc7dd0bc5c0ed3e796e
+  specs:
+    dat (0.1.0)
+      activesupport (>= 3.0)
+
+GIT
   remote: git://github.com/quirkey/resque-status.git
   revision: 66f3f35f945859c80a56b4b573325a79b556f243
   ref: 66f3f35f945859c80a56b4b573325a79b556f243
@@ -269,6 +276,7 @@ DEPENDENCIES
   byebug
   cancan
   carrot
+  dat!
   devise
   devise_token_auth
   elasticsearch

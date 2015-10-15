@@ -6,7 +6,7 @@ class Node < ActiveRecord::Base
 
   before_create :generate_uuid
   belongs_to :model
-  belongs_to :pool
+  belongs_to :pool, class_name: 'SqlBackedPool'
   belongs_to :parent, class_name: "Node"
   belongs_to :spawned_from_datum, class_name: "SpreadsheetRow"
   belongs_to :modified_by, class_name: "Identity"

@@ -99,3 +99,11 @@ def find_or_create_identity(short_name)
   end
   identity
 end
+
+def fixture_file(path)
+  File.open(fixture_file_path(path))
+end
+
+def fixture_file_path(path)
+  File.join(fixture_path, path)
+end

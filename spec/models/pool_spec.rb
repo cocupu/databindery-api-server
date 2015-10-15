@@ -4,93 +4,100 @@ describe Pool do
   let(:pool)  { Pool.new }
   subject     { pool }
 
-  it "should belong to an identity" do
+  it "belongs to an identity" do
     subject.short_name = 'short_name'
     subject.should_not be_valid
     subject.errors.full_messages.should == ["Owner can't be blank"]
     subject.owner = Identity.create
-    subject.should be_valid
+    expect(subject).to be_valid
   end
   
-  it "should create a persistent_id when created" do
+  it "creates a persistent_id when created" do
     subject.persistent_id.should be_nil
     # Make the pool valid to save...
       subject.short_name = 'short_name'
       subject.owner = FactoryGirl.create(:identity)
     subject.save!
-    subject.persistent_id.should_not be_nil
+    expect(subject.persistent_id).to_not be_nil
   end
   
   describe "#for_identity" do
-    before do
-      @pool = FactoryGirl.create(:pool)
-    end
+    let(:pool)  { FactoryGirl.create(:pool) }
+    subject { Pool.for_identity(target_identity) }
+
     describe "for a pool owner" do
-      it "should return all the pools" do
-        Pool.for_identity(@pool.owner).should == [@pool]
+      let(:target_identity) { pool.owner }
+      it "returns all the pools" do
+        expect(subject).to eq [pool]
       end
     end
     describe "for a non-pool owner" do
-      before do
-        @non_owner = FactoryGirl.create(:identity)
+      let(:non_owner) { FactoryGirl.create(:identity) }
+      let(:target_identity) { non_owner }
+      describe "when the user doesn't have read or edit access" do
+        it "returns an empty set" do
+          expect(subject).to eq []
+        end
       end
-      describe "for a user with read-access on the pool" do
+      describe "when the user has read-access on the pool" do
         before do
-          AccessControl.create!(identity: @non_owner, pool: @pool, access: 'READ')
+          AccessControl.create!(identity: non_owner, pool: pool, access: 'READ')
         end
-        it "should return all the pools" do
-          Pool.for_identity(@pool.owner).should == [@pool]
+        it "returns all the pools" do
+          expect(subject).to eq [pool]
         end
       end
-      describe "for a user with edit-access on the pool" do
+      describe "when the user has edit-access on the pool" do
         before do
-          AccessControl.create!(identity: @non_owner, pool: @pool, access: 'EDIT')
+          AccessControl.create!(identity: non_owner, pool: pool, access: 'EDIT')
         end
-        it "should return all the pools" do
-          Pool.for_identity(@pool.owner).should == [@pool]
+        it "returns all the pools" do
+          expect(subject).to eq [pool]
         end
-      end
-      it "should return an empty set" do
-        Pool.for_identity(@non_owner) == []
       end
     end
   end
   
   describe "perspectives" do
+    let(:exhibit1) { FactoryGirl.create(:exhibit) }
+    let(:exhibit2) { FactoryGirl.create(:exhibit) }
+    subject { pool.perspectives }
     before do
-      @exhibit1 = FactoryGirl.create(:exhibit)
-      @exhibit2 = FactoryGirl.create(:exhibit)
-      pool.exhibits = [@exhibit1, @exhibit2]
+      pool.exhibits = [exhibit1, exhibit2]
       pool.save
     end
-    it "should return the exhibits" do
-      subject.perspectives.should == [subject.generated_default_perspective, @exhibit1, @exhibit2]
+    it "returns the exhibits" do
+      expect(subject).to eq [pool.generated_default_perspective, exhibit1, exhibit2]
     end
     
     describe "default perspective" do
+      subject { pool.default_perspective }
       describe "when a default has not been explicitly set" do
-        it "should return the generated default perspective for the pool" do
-          subject.default_perspective.should == subject.generated_default_perspective
+        it "returns the generated default perspective for the pool" do
+          expect(subject).to eq pool.generated_default_perspective
         end
       end
       describe "when a default has been explicitly set" do
         before do
-          subject.chosen_default_perspective = @exhibit1
+          pool.chosen_default_perspective = exhibit1
         end
-        it "should return the one that has been explicitly set" do
-          subject.default_perspective.should == @exhibit1
+        it "returns the one that has been explicitly set" do
+          expect(subject).to eq exhibit1
         end
       end
     end
     describe "generated_default_perspective" do
       subject { pool.generated_default_perspective }
+      let(:model1) do
+        model1 = FactoryGirl.create(:model, pool: pool)
+        model1.fields << Field.create(:code=>'one', :name=>'One', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
+        model1.fields << Field.create(:code=>'two', :name=>'Two', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
+        model1.association_fields << FactoryGirl.create(:association, name: 'authors', label: "Authors", multivalue:true, references: 39)
+        model1.save
+        model1
+      end
       before do
-        @model1 = FactoryGirl.create(:model, pool: pool)
-        @model1.fields << Field.create(:code=>'one', :name=>'One', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
-        @model1.fields << Field.create(:code=>'two', :name=>'Two', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
-        @model1.association_fields << FactoryGirl.create(:association, name: 'authors', label: "Authors", multivalue:true, references: 39)
-        @model1.save
-        pool.models << @model1
+        pool.models << model1
       end
       it "generates an Exhibit whose facet and index fields are all fields from all Models" do
         expect(subject).to be_kind_of Exhibit
@@ -116,115 +123,120 @@ describe Pool do
     let(:model2) {FactoryGirl.create(:model, association_fields:[a3, a4, a5])}
 
     before do
-      #@model1 = FactoryGirl.create(:model)
-      #@model2 = FactoryGirl.create(:model)
-      #
-      #@model1.associations =  [a1, a2]
-      #@model2.associations  = [a3, a4, a5]
-      subject.models << model1
-      subject.models << model2
+      pool.models << model1
+      pool.models << model2
     end
-    it "should return all Model associations in the pool" do
-      subject.all_associations.should == [a1, a2, a3, a4, a5]
+    subject { pool.all_associations }
+    it "returns all Model associations in the pool" do
+      expect(subject).to eq [a1, a2, a3, a4, a5]
     end
-    it "should support filtering for uniqueness based on association code" do
-      subject.all_associations().length.should == 5
-      subject.all_associations(unique: true).length.should == 4
-      subject.all_associations(unique: true).should == [a1, a2, a3, a4]
+    it "supports filtering for uniqueness based on association code" do
+      expect(pool.all_associations).to eq [a1, a2, a3, a4, a5]
+      expect(pool.all_associations(unique: true)).to eq [a1, a2, a3, a4]
     end
   end
 
-  it "should have many audience categories" do
-    subject.audience_categories.should == []
-    @aud = AudienceCategory.new
-    subject.audience_categories << @aud
-    subject.audience_categories.should == [@aud]
+  it "has many audience categories" do
+    aud = AudienceCategory.new
+    pool.audience_categories << aud
+    expect(pool.audience_categories).to eq [aud]
   end
 
   describe "audiences" do
+    let(:identity) { FactoryGirl.create :identity }
     let(:subject_field) {FactoryGirl.create(:subject_field)}
     let(:location_field) {FactoryGirl.create(:location_field)}
+    let(:cat1) { FactoryGirl.create :audience_category, pool:pool }
+    let(:cat2) { FactoryGirl.create :audience_category }
+    let(:aud1) { FactoryGirl.create :audience, audience_category:cat1, name:"Audience 1" }
+    let(:aud2) { FactoryGirl.create :audience, audience_category:cat1, name:"Audience 2" }
+    let(:aud3) { FactoryGirl.create :audience, audience_category:cat2, name:"Audience 3" }
+
     before do
-      @identity = FactoryGirl.create :identity
-      @cat1 =  FactoryGirl.create :audience_category, pool:subject
-      @cat2 =  FactoryGirl.create :audience_category
-      @aud1 =  FactoryGirl.create :audience, audience_category:@cat1, name:"Audience 1"
-      @aud2 =  FactoryGirl.create :audience, audience_category:@cat1, name:"Audience 2"
-      @aud3 =  FactoryGirl.create :audience, audience_category:@cat2, name:"Audience 3"
-      @aud1.members << @identity
-      @aud3.members << @identity
-      subject.audience_categories << @cat1 << @cat2
+      aud2.members = []
+      aud1.members << identity
+      aud3.members << identity
+      pool.audience_categories << cat1 << cat2
     end
     describe "audiences_for_identity" do
+      subject { pool.audiences_for_identity(identity) }
       it "should return all the applicable audiences for the given identity" do
-        subject.audiences_for_identity(@identity).should == [@aud1, @aud3]
+        expect(subject).to eq [aud1, aud3]
       end
     end
     describe "apply_query_params_for_identity" do
       it "aliases to apply_elasticsearch_params_for_identity" do
         query_builder = Bindery::Persistence::ElasticSearch::Query::QueryBuilder.new
-        expect(subject).to receive(:apply_elasticsearch_params_for_identity).with(@identity, query_builder, {})
-        subject.apply_query_params_for_identity(@identity, query_builder, {})
+        expect(pool).to receive(:apply_elasticsearch_params_for_identity).with(identity, query_builder, {})
+        pool.apply_query_params_for_identity(identity, query_builder, {})
       end
     end
   end
   
   describe "default_bucket_id" do
-    it "should be the pools persistent id" do
-      subject.should_receive(:persistent_id).and_return("thepid")
-      subject.default_bucket_id.should == "thepid"
+    it "defaults to the the pool's persistent id" do
+      expect(pool).to receive(:persistent_id).and_return("thepid")
+      expect(pool.default_bucket_id).to eq "thepid"
     end
   end
   
   describe "bucket" do
-    it "should return the pools bucket from s3 connection" do
-      subject.default_file_store.should_receive(:bucket).and_return("the bucket")
-      subject.bucket.should == "the bucket"
+    subject { pool.bucket }
+    it "returns the pool's bucket from s3 connection" do
+      expect(pool.default_file_store).to receive(:bucket).and_return("the bucket")
+      expect(subject).to eq "the bucket"
     end
   end
   
   describe "ensure_bucket_initialized" do
-    it "should ensure that the pools bucket exists on s3 connection" do
-      subject.default_file_store.should_receive(:ensure_bucket_initialized).and_return("the bucket")
-      subject.ensure_bucket_initialized.should == "the bucket"
+    subject { pool.ensure_bucket_initialized }
+    it "ensures that the pool's bucket exists on s3 connection" do
+      expect(pool.default_file_store).to receive(:ensure_bucket_initialized).and_return("the bucket")
+      expect(subject).to eq "the bucket"
     end
   end
   
   describe "short_name" do
     before do
-      subject.owner = Identity.create
+      pool.owner = Identity.create
     end
-    it "Should accept letters, numbers, underscore and hyphen" do
-      subject.short_name="short-name_123"
-      subject.should be_valid
+    it "accepts letters, numbers, underscore and hyphen" do
+      pool.short_name="short-name_123"
+      expect(pool).to be_valid
     end
-    it "Should not accept spaces or symbols" do
-      subject.short_name="short name_123"
-      subject.should_not be_valid
+    it "does not accept spaces or symbols" do
+      pool.short_name="short name_123"
+      expect(pool).to_not be_valid
       %w[. & * ) / = # ; : \\ @ \[ ?].each do |sym|
-        subject.short_name="short#{sym}name_123"
-        subject.should_not be_valid
+        pool.short_name="short#{sym}name_123"
+        expect(pool).to_not be_valid
       end
     end
-    it "should get downcased" do
-      subject.short_name="Short-Name"
-      subject.short_name.should == 'short-name'
+    it "gets downcased" do
+      pool.short_name="Short-Name"
+      expect(pool.short_name).to eq 'short-name'
     end
   end
 
   describe "all_fields" do
+    let(:pool) { FactoryGirl.create(:generic_pool) }
+    let(:model1) do
+      model1 = FactoryGirl.create(:model, pool: pool)
+      model1.fields << Field.create(:code=>'one', :name=>'One', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
+      model1.fields << Field.create(:code=>'two', :name=>'Two', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
+      model1.save
+      model1
+    end
+    let(:model2) do
+      model2 = FactoryGirl.create(:model, pool: pool)
+      model2.fields << Field.create(:code=>'one', :name=>'One', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
+      model2.fields << Field.create(:code=>'three', :name=>'Three', :type=>'TextField', :uri=>'dc:name', :multivalue=>false)
+      model2.save
+      model2
+    end
     before do
-      pool.save
-      @model1 = FactoryGirl.create(:model, pool: pool)
-      @model1.fields << Field.create(:code=>'one', :name=>'One', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
-      @model1.fields << Field.create(:code=>'two', :name=>'Two', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
-      @model1.save
-      @model2 = FactoryGirl.create(:model, pool: pool)
-      @model2.fields << Field.create(:code=>'one', :name=>'One', :type=>'TextField', :uri=>'dc:name', :multivalue=>true)
-      @model2.fields << Field.create(:code=>'three', :name=>'Three', :type=>'TextField', :uri=>'dc:name', :multivalue=>false)
-      @model2.save
-      pool.models << @model1
-      pool.models << @model2
+      pool.models << model1
+      pool.models << model2
     end
     let(:all_fields) { pool.all_fields }
     let(:codes)   { subject.map {|f| f.code } }
@@ -232,18 +244,6 @@ describe Pool do
     it "returns all fields from all models including FileEntity, removing duplicates" do
       ["model_name","description","one","two","three"].each {|code| expect(codes).to include(code)}
       Model.file_entity.fields.each {|file_entity_field| expect(all_fields).to include(file_entity_field)}
-    end
-  end
-
-  describe "update_index" do
-    it "updates the index with all current nodes" do
-      allow(subject).to receive(:node_pids).and_return(["pid1","pid2"])
-      ["pid1","pid2"].each_with_index do |pid,index|
-        fake_version_id = index
-        allow(Node).to receive(:latest_version_id).with(pid).and_return(fake_version_id)
-        expect(Bindery::Persistence::ElasticSearch::Node::NodeIndexer).to receive(:perform_async).with(fake_version_id)
-      end
-      subject.update_index
     end
   end
 

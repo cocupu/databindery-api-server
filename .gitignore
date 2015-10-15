@@ -27,7 +27,7 @@ node_modules
 jetty/
 
 # don't store dat repositories
-dat
+/dat
 
 # Don't store AWS credentials
 config/s3.yml
