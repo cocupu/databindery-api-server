@@ -1,14 +1,16 @@
 require 'rails_helper'
 
-describe Bindery::Persistence::Dat::Repository, elasticsearch: true, sidekiq: :inline do
-  let(:pool) { FactoryGirl.create(:dat_backed_pool) }
-  let(:sample_repo) { setup_sample_repo }
+describe Api::V1::PoolIndicesController, type: :request, elasticsearch: true, sidekiq: :inline do
+  let(:sample_dat_repo) { setup_sample_dat_repo }
+  let(:path_to_sample_dat) { 'tmp/dat/sample' }
+  let(:pool) { FactoryGirl.create(:dat_backed_pool, dat_location: path_to_sample_dat) }
+  let(:login_credential) { pool.owner.login_credential }
 
   describe 'indexing' do
     it 'indexes data from dat into elasticsearch' do
-      sample_repo
-      puts "[integration] indexing dat content into Elasticsearch at #{sample_repo.pool.to_param}"
-      sample_repo.index()
+      puts "[integration] indexing dat content into Elasticsearch at #{sample_dat_repo.pool.to_param}"
+      env ={ 'HTTP_AUTHORIZATION' => ActionController::HttpAuthentication::Basic.encode_credentials(login_credential.email, login_credential.password) }
+      put "/api/v1/pools/#{pool.id}/indices/live", {}, env
       sleep 1
       expect(pool.models.count).to eq 3
       query_all_result, query_all_document_list = pool.search(q:'*')
@@ -22,17 +24,17 @@ describe Bindery::Persistence::Dat::Repository, elasticsearch: true, sidekiq: :i
     end
   end
 
-  def setup_sample_repo
-    sample_repo_path = File.expand_path('tmp/dat/sample')
-    sample_repo = described_class.new(pool: pool, dir: sample_repo_path)
-    if sample_repo.is_dat_repository? && sample_repo.datasets == ["proteins", "plants", "hail"]
-      puts "[integration] using the existing dat repo at #{sample_repo.dir}"
+  def setup_sample_dat_repo
+    sample_dat_repo_path = File.expand_path(path_to_sample_dat)
+    sample_dat_repo = Bindery::Persistence::Dat::Repository.new(pool: pool, dir: sample_dat_repo_path)
+    if sample_dat_repo.is_dat_repository? && sample_dat_repo.datasets == ["proteins", "plants", "hail"]
+      puts "[integration] using the existing dat repo at #{sample_dat_repo.dir}"
     else
-      puts "[integration] creating sample dat repo at #{sample_repo.dir}"
-      init_and_import_into(sample_repo)
-      puts "[integration] created sample repo with datasets #{sample_repo.datasets}"
+      puts "[integration] creating sample dat repo at #{sample_dat_repo.dir}"
+      init_and_import_into(sample_dat_repo)
+      puts "[integration] created sample repo with datasets #{sample_dat_repo.datasets}"
     end
-    sample_repo
+    sample_dat_repo
   end
 
   def init_and_import_into(repository)

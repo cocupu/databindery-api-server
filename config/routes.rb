@@ -17,6 +17,7 @@ Rails.application.routes.draw do
           end
           match 'files' => 'nodes#attach_file', :via=>:post
         end
+        resources :indices, to: 'pool_indices'
         resources :models, except:[:new,:edit]
         resources :fields, except:[:new,:edit]
         resources :audience_categories, except:[:new,:edit] do

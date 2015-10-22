@@ -62,6 +62,14 @@ class ApplicationController < ActionController::API
     end
   end
 
+  def require_pool_read_access
+    authorize!(:read, @pool)
+  end
+
+  def require_pool_edit_access
+    authorize!(:edit, @pool)
+  end
+
   def http_basic_auth_for_the_lazy
 
     if request.authorization
