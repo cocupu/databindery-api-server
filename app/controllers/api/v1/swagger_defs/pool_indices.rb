@@ -21,7 +21,7 @@ module Api::V1::SwaggerDefs::PoolIndices
       summary "Updates the Index (aka. adds data/documents to the index), often pulling content from dat"
       param :path, :pool_id, :string, :required, "ID of the pool the index belongs to"
       param :path, :id, :integer, :required, "Index Name"
-      param :form, :source, :string, :optional, "the source to index from (defaults to :dat)"
+      param :form, :source, :String, :optional, "the source to index from (defaults to :dat). Alternatively provide {dat: {from: 'commitHash', to: 'commitHash'}"
       response :success, "Success", :Index
       response :unauthorized
       response :not_acceptable
@@ -52,5 +52,6 @@ module Api::V1::SwaggerDefs::PoolIndices
       description "An elasticsearch index.  You can have many elasticsearch indexes for a single pool, but only one 'live' index that will be queried by default when you run a search agains the pool's data"
       property :index_name, :string, :required, "Index Name"
     end
+
   end
 end

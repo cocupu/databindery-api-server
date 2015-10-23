@@ -54,10 +54,13 @@ class DatRow
   end
 
   # Parse dat json output and return a DatRow object
+  # Recognizes 2 formats automatically and parses their data as a DatRow:
+  #   * :export (output from running `dat export --full`)
+  #   * :diff (output from running `dat diff`)
+  # The original data is stored in the +row_json+ attribute and the original format is recorded in the +row_format+ attribute.
   # @param [Hash] row JSON for the row
   # @option [String] pool
   # @option [String] model
-  # @option [String] row_format -- either :export (output from running `dat export --full`) or :diff (output from running `dat diff`)
   def self.parse(row, pool: nil, model: nil)
     # raise ArgumentError, 'row_format must be either :diff or :export' unless [:diff, :export].include?(row_format)
     row_json = parse_row_json(row)

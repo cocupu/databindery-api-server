@@ -44,7 +44,7 @@ gem 'aws-ses', '~> 0.4.4', require: 'aws/ses'
 gem 'roo', "~> 1.12.2"
 
 # dat repositories
-gem 'dat', github:'databindery/dat-ruby'
+gem 'dat', github:'databindery/dat-ruby', ref: '2662137'
 
 # Misc
 gem 'uuid'

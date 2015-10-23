@@ -1,6 +1,7 @@
 GIT
   remote: git://github.com/databindery/dat-ruby.git
-  revision: 017ab2dab1e74bc7fc399dc7dd0bc5c0ed3e796e
+  revision: 266213789f5a2b9ecd5ee07fed5aa858eaa71db0
+  ref: 2662137
   specs:
     dat (0.1.0)
       activesupport (>= 3.0)

@@ -18,8 +18,8 @@ describe Api::V1::PoolIndicesController, type: :request, elasticsearch: true, si
       # TODO: query by type and check the results
       # for now, pick a random document and test that it has the characteristics of any of the models.
       es_document = query_all_document_list.first
-      expect(['hail', 'proteins', 'plants']).to include es_document['_type']
-      expect(['Hail', 'Proteins', 'Plants']).to include es_document['_source']['_bindery_model_name']
+      expect(['hail', 'protein', 'plant']).to include es_document['_type']
+      expect(['Hail', 'Protein', 'Plant']).to include es_document['_source']['_bindery_model_name']
       expect(pool.model_ids).to include es_document['_source']['_bindery_model']
     end
   end

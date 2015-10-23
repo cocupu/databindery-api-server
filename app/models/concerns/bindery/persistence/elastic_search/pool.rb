@@ -97,6 +97,11 @@ module Bindery::Persistence::ElasticSearch::Pool
       return index_name
     end
 
+    # The names of all the indices belonging to this pool, plus the name of the default/live alias
+    def index_names(scope: :all)
+      get_aliases(scope: scope).keys + [pool.to_param]
+    end
+
     # Returns the name of the index that the live alias currently points to
     def current_live_index
       get_aliases(scope: :live).keys.first

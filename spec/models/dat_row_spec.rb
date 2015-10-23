@@ -16,7 +16,7 @@ describe DatRow do
     subject { dat_row }
     context 'row_format: :diff' do
       let(:row_json) { '{"key":"128","forks":["f247231b35d48d13a2da6c1648579b1fdd5254695e02bc1127f08a375ecd282d","1a6405b75dbe434346c38d3652294f92479b89d87ab5931c3ea868c0b09574d5"],"versions":[null,{"content":"row","type":"put","key":"128","dataset":"proteins","value":{"Record type":"ATOM","serial":"128","name":"OE1","altLoc":"GLU","resNAme":"A","chainID":"8","resSeq":"7.480","iCode":"-4.479","x":"14.728","y":"1.00","z":"0.00","occupancy":"O"},"version":"1a6405b75dbe434346c38d3652294f92479b89d87ab5931c3ea868c0b09574d5","change":4}]}'}
-      it 'parses the row json as a row from a dat diff' do
+      it 'recognizes the row json as a row from a dat diff and parses it' do
         expect(subject.data).to eq( {"Record type"=>"ATOM", "serial"=>"128", "name"=>"OE1", "altLoc"=>"GLU", "resNAme"=>"A", "chainID"=>"8", "resSeq"=>"7.480", "iCode"=>"-4.479", "x"=>"14.728", "y"=>"1.00", "z"=>"0.00", "occupancy"=>"O"} )
         expect(subject.persistent_id).to eq('128')
         expect(subject.row_json).to eq JSON.parse(row_json)
@@ -27,7 +27,7 @@ describe DatRow do
     end
     context 'row_format: :export' do
       let(:row_json) { {"content"=>"row", "key"=>"ABAB70", "version"=>"a55dbb9800b7f61fa7a0ea32dfb3000b3dbd24ad6ba7cacb0318510edafc217b", "value"=>{"Symbol"=>"ABAB70", "Synonym Symbol"=>"THAB70", "Scientific Name with Author"=>"Thuidium abietinum (Hedw.) Schimp.", "Common Name"=>"", "Family"=>"Thuidiaceae"}}}
-      it 'parses the row json as a row from a dat export' do
+      it 'recognizes the row json as a row from a dat export and parses it' do
         expect(subject.data).to eq ( {"Symbol"=>"ABAB70", "Synonym Symbol"=>"THAB70", "Scientific Name with Author"=>"Thuidium abietinum (Hedw.) Schimp.", "Common Name"=>"", "Family"=>"Thuidiaceae"} )
         expect(subject.persistent_id).to eq('ABAB70')
         expect(subject.pool).to eq pool

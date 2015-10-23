@@ -29,6 +29,13 @@ describe Bindery::Persistence::ElasticSearch::Pool do
       end
     end
 
+    describe 'index_names' do
+      it 'returns all index names and the name of the default/live alias' do
+        indexes_only = adapter.get_aliases(scope: :all).keys
+        expect(adapter.index_names).to eq indexes_only + [pool.to_param]
+      end
+    end
+
     describe 'set_alias' do
       before do
         adapter.set_alias(new_index_name)
