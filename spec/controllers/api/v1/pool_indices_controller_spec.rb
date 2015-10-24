@@ -13,6 +13,12 @@ describe Api::V1::PoolIndicesController do
     editor
   end
   let(:pool) { FactoryGirl.create(:dat_backed_pool, owner: owner)}
+  let(:pool_with_model) do
+    p = FactoryGirl.create(:dat_backed_pool, owner: owner)
+    p.models.create(code:'mollusks', name:'Mollusks')
+    p
+  end
+
   let(:index_name) { '8_2015-10-19_15:10:15' }
   let(:aliases) { {"3149_2015-10-21_17:10:43"=>{"aliases"=>{"3149-all"=>{}}}}}
   let(:elasticsearch_adapter) { double('elasticsearch') }
@@ -60,7 +66,9 @@ describe Api::V1::PoolIndicesController do
   end
 
   describe 'create' do
-    subject { post :create, pool_id: pool }
+    let(:created_index_name) { 'anIndex' }
+    let(:post_params) { { pool_id: pool }}
+    subject { post :create, post_params }
 
     describe "when not logged on" do
       it "requires authentication" do
@@ -81,27 +89,53 @@ describe Api::V1::PoolIndicesController do
       before do
         sign_in editor.login_credential
       end
-      # POST /pools/3/indices
-      it 'creates a new index and writes the pool\'s models into it as mappings'
-
-      context 'with a source specified' do
-        # POST /pools/3/indices source: :dat
-        it 'creates a new index and indexes the content from that source'
+      context 'by default' do
+        let(:pool) { pool_with_model }
+        # POST /pools/3/indices
+        it 'creates a new index and writes the pool\'s models into it as mappings' do
+          expect(pool.__elasticsearch__).to receive(:create_index).with(index_name: nil).and_return(created_index_name)
+          pool.models.each do |model|
+            expect(model.__elasticsearch__).to receive(:save).with(index_name: created_index_name)
+          end
+          subject
+        end
       end
 
-      context 'with an alias specified' do
+      context 'with a source specified' do
+        let(:post_params) { { pool_id: pool, source: :dat }}
+        # POST /pools/3/indices source: :dat
+        it 'creates a new index and indexes the content from that source' do
+          expect(pool.__elasticsearch__).to receive(:create_index).with(index_name: nil).and_return(created_index_name)
+          expect(pool).to receive(:update_index).with(index_name: created_index_name, :source=>"dat")
+          subject
+        end
+      end
+
+      context 'setting the alias' do
+        let(:post_params) { { pool_id: pool, alias: true }}
         # POST /pools/3/indices alias: 'live', source: {dat: {from:'commitHash1', to:'commitHash2'}}
-        it 'builds a new index then points the alias at it'
-        it 'translates "live" index as the pool\'s default index'
-        # this lets you 'rebuild' the live index (build a new index
-        # then swap it in as the live index) with a single request
+        it 'builds a new index then points the alias at it' do
+          # this lets you 'rebuild' the live index (build a new index
+          # then swap it in as the live index) with a single request
+          expect(pool.__elasticsearch__).to receive(:create_index).with(index_name: nil).and_return(created_index_name)
+          expect(pool.__elasticsearch__).to receive(:set_alias).with(created_index_name).and_return(created_index_name)
+          subject
+        end
       end
 
       context 'skipping models' do
+        let(:pool) { pool_with_model }
         # This is mainly useful if you want to allow the index to auto-detect data types
+        let(:post_params) { { pool_id: pool, write_models: false }}
 
         # POST /pools/3/indices write_models: false, source: :dat
-        it 'creates a new index and writes data to it without persisting models'
+        it 'creates a new index and writes data to it without persisting models' do
+          expect(pool.__elasticsearch__).to receive(:create_index).with(index_name: nil).and_return(created_index_name)
+          pool.models.each do |model|
+            expect(model.__elasticsearch__).to_not receive(:save)
+          end
+          subject
+        end
       end
     end
 
@@ -109,7 +143,8 @@ describe Api::V1::PoolIndicesController do
   end
 
   describe 'show' do
-    subject { get :show, pool_id: pool, id:'8_2015-10-19_15:10:15' }
+    # GET /pools/3/indices/8_2015-10-19_15:10:15
+    subject { get :show, pool_id: pool, id: index_name }
     describe "when not logged on" do
       it "requires authentication" do
         expect(response).to respond_unauthorized
@@ -129,14 +164,34 @@ describe Api::V1::PoolIndicesController do
       before do
         sign_in reader.login_credential
       end
-      # GET /pools/3/indices/8_2015-10-19_15:10:15
-      it 'gets/shows info about an index'
 
-      context 'when index_name is "live"' do
-        let(:index_name) { 'live' }
+      context 'when the pool has an index by that name' do
+        before do
+          expect(pool.__elasticsearch__).to receive(:require_index_to_be_in_pool!).with(index_name).and_return(nil)
+        end
+        it 'gets/shows info about an index' do
+          expect(pool.__elasticsearch__).to receive(:get_index).with(index_name).and_return('the response')
+          expect(response.body).to eq('the response')
+        end
+      end
+
+      context 'when the pool doesn\'t have an index by that name' do
+        before do
+          expect(pool.__elasticsearch__).to receive(:require_index_to_be_in_pool!).with(index_name).and_raise(ArgumentError, 'the error message')
+        end
+        it 'returns unprocessable_entity' do
+          expect(response).to respond_unprocessable_entity(description: 'the error message')
+        end
+      end
+
+      context 'when id is "live"' do
         # get/show info about current default/'live' index
         # GET /pools/3/indices/live
-        it 'returns to the index that the pool\'s main alias points to'
+        let(:index_name) { 'live' }
+        it 'returns info for the index that the pool\'s main alias points to' do
+          expect(pool.__elasticsearch__).to receive(:get_index).with(pool.to_param).and_return('the response')
+          expect(response.body).to eq('the response')
+        end
       end
     end
   end
@@ -192,39 +247,43 @@ describe Api::V1::PoolIndicesController do
       end
 
       context 'when id is "live"' do
-        let(:index_name) { 'live' }
+        subject { put :update, pool_id: pool, id: 'live' }
         # PUT /pools/3/indices/live source: :dat
-        it 'updates the pool\'s current main aliased index' do
+        it 'updates the contents of the pool\'s current main aliased index' do
           expect(pool.dat).to receive(:index).with(index_name: pool.to_param)
           expect(response).to respond_success
         end
 
-        context 'replacing "live" index' do
+        context 'and an index_name is also provided' do
           let(:new_index_name) { '8_2014-08-30_15:10:15' }
           subject { put :update, pool_id: pool, id: 'live', index_name: new_index_name }
-
+          before do
+            # the check we're relying on is run within pool.dat.index()
+            # so allowing it to run but making it process zero datasets
+            allow(pool.dat).to receive(:datasets).and_return([])
+          end
           # alias 'live' to a different index
           # PUT /pools/3/indices/live index_name: '8_2015-10-19_15:10:15'
           context 'when the new index_name is valid' do
             before do
-              expect(pool).to receive(:indexes).and_return([new_index_name])
+              expect(pool.__elasticsearch__).to receive(:require_index_to_be_in_pool!).and_return(nil)
             end
-            it 'updates the pool\'s main alias'
+            it 'updates the pool\'s main alias' do
+              expect(pool.__elasticsearch__).to receive(:set_alias).with(new_index_name)
+              expect(response).to be_successful
+            end
           end
           context 'when the new index_name is not valid' do
             before do
-              expect(pool).to receive(:indexes).and_return([])
+              expect(pool.__elasticsearch__).to receive(:require_index_to_be_in_pool!).and_raise(ArgumentError, "Message - index not in pool.")
             end
-            it 'does not update the alias'
+            it 'does not update the alias' do
+              expect(pool.__elasticsearch__).to_not receive(:set_alias)
+              expect(response).to respond_unprocessable_entity(description: "Message - index not in pool.")
+            end
           end
         end
       end
-
-
-      # context 'writing only models to an index' do
-      #   # PUT /pools/3/indices/8_2015-10-19_15:10:15 write_models: true
-      #   it 'writes the pool\'s models to the index as mappings'
-      # end
     end
 
   end

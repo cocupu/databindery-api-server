@@ -16,8 +16,14 @@ class DatBackedPool < Pool
     # end
   end
 
-  def update_index
-    dat.index
+  def update_index(index_name: nil, source: nil)
+    if source.nil? || source == 'dat' || source == :dat
+      result = dat.index(index_name: index_name)
+    elsif source.kind_of?(Hash)
+      dat_params = source.fetch(:dat, {to: nil, from: nil})
+      result = dat.index(index_name: index_name, from: dat_params[:from], to: dat_params[:to])
+    end
+    result
   end
 
   def ensure_dat_location

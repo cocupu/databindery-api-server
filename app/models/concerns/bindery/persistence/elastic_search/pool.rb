@@ -97,6 +97,17 @@ module Bindery::Persistence::ElasticSearch::Pool
       return index_name
     end
 
+    # Get info about an index
+    #
+    def get_index(index_name)
+      index_name ||= pool.to_param
+      client.indices.get index: index_name
+    end
+
+    def delete_index(index_name)
+      client.indices.delete index: index_name
+    end
+
     # The names of all the indices belonging to this pool, plus the name of the default/live alias
     def index_names(scope: :all)
       get_aliases(scope: scope).keys + [pool.to_param]
@@ -107,10 +118,6 @@ module Bindery::Persistence::ElasticSearch::Pool
       get_aliases(scope: :live).keys.first
     end
 
-    def delete_index(index_name)
-      client.indices.delete index: index_name
-    end
-
     def delete_all_indices
       get_aliases(scope: :all).keys do |index_name|
         delete_index(index_name)
@@ -118,13 +125,22 @@ module Bindery::Persistence::ElasticSearch::Pool
     end
 
     # Sets this pool's elasticsearch alias to point to the index named :index_name
+    # While elasticsearch can have any number of aliases, Bindery Pools only have
+    # two aliases -- the "live" alias and a catch-all that tracks all indices associated
+    # with the pool.
+    # @param [String] index_name to point the alias at
     def set_alias(index_name)
-      old_aliases = get_aliases
+      old_aliases = get_aliases(scope: :all)
       client.indices.put_alias name: pool.to_param, index: index_name
       client.indices.put_alias name: pool.to_param + "-all" , index: index_name
-      old_aliases.keys.each {|index_name| remove_alias(index_name)}
+      old_aliases.keys.each {|old_index_name| remove_alias(old_index_name)}
+      get_aliases(scope: :live)
     end
 
+    # Get the aliases for this pool's indices. You are limited to :live and :all,
+    # where :live is the current live index (pool.to_param) and :all tracks all of the
+    # indices associated with this pool.
+    # @option [Symbol] scope can be either :live or :all
     def get_aliases(scope: :live)
       found_aliases = {}
       begin
@@ -141,6 +157,9 @@ module Bindery::Persistence::ElasticSearch::Pool
       found_aliases
     end
 
+    # delete the alias from +scope+
+    # if +scope+ is :all, the index will be removed from all aliases
+    # if +scope+ is :live the index will remain in the :all alias but be removed from live alias
     def remove_alias(index_name, scope: :live)
       case scope
         when :live
@@ -149,10 +168,6 @@ module Bindery::Persistence::ElasticSearch::Pool
           client.indices.delete_alias name: pool.to_param, index: index_name
           client.indices.delete_alias name: pool.to_param, index: index_name + '_all'
       end
-    end
-
-    def get
-      client.indices.get index: index_name
     end
 
     # Ensures that the query is directed at this pool's index
@@ -180,6 +195,10 @@ module Bindery::Persistence::ElasticSearch::Pool
       Rails.logger.debug "[elasticsearch query] #{query_builder(query_params).as_query}"
       response = client.search query_builder(query_params).as_query
       return response, response["hits"]["hits"]
+    end
+
+    def require_index_to_be_in_pool!(index_name)
+      raise ArgumentError, "The pool with id \##{pool.id} does not have an index named #{index_name}" unless index_names.include?(index_name)
     end
 
   end

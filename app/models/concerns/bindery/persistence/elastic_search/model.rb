@@ -42,22 +42,29 @@ module Bindery::Persistence::ElasticSearch::Model
       @model = model
     end
 
-    # Create/Update the elasticsearch type for this Model
-    def save
-      Bindery::Persistence::ElasticSearch.client.indices.put_mapping index: model.pool.to_param, type: model.to_param, body: model.to_elasticsearch
+    # Create/Update the elasticsearch type for this Model in index +index_name+
+    # @option [String] index_name defaults to pool's live index
+    def save(index_name: nil)
+      index_name ||= model.pool.to_param
+      Bindery::Persistence::ElasticSearch.client.indices.put_mapping index: index_name, type: model.to_param, body: model.to_elasticsearch
     end
 
-    # Destroy all elasticsearch artifacts associated with this Model
-    def destroy
+    # Destroy all elasticsearch artifacts associated with this Model from index +index_name+
+    # @option [String] index_name defaults to pool's live index
+    def destroy(index_name: nil)
+      index_name ||= model.pool.to_param
       begin
-        Bindery::Persistence::ElasticSearch.client.indices.delete_mapping index: model.pool.to_param, type: model.to_param
+        Bindery::Persistence::ElasticSearch.client.indices.delete_mapping index: index_name, type: model.to_param
       rescue Elasticsearch::Transport::Transport::Errors::NotFound => e
         # Mapping doesn't exist, so don't need to delete it.  Do nothing.
       end
     end
 
-    def get
-      Bindery::Persistence::ElasticSearch.client.indices.get_mapping(index: model.pool.to_param, type: model.id).values.first["mappings"][model.to_param]
+    # Get the elasticsearch mapping associated with this Model in index +index_name+
+    # @option [String] index_name defaults to pool's live index
+    def get(index_name: nil)
+      index_name ||= model.pool.to_param
+      Bindery::Persistence::ElasticSearch.client.indices.get_mapping(index: index_name, type: model.id).values.first["mappings"][model.to_param]
     end
 
   end

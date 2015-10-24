@@ -37,9 +37,8 @@ describe Bindery::Persistence::ElasticSearch::Pool do
     end
 
     describe 'set_alias' do
-      before do
-        adapter.set_alias(new_index_name)
-      end
+      subject { adapter.set_alias(new_index_name) }
+      before { subject }
       it 'points the live alias to the given index_name and adds that index to _all alias' do
         expect(adapter.current_live_index).to eq new_index_name
         expect(adapter.get_aliases(scope: :all).keys).to include(new_index_name)
@@ -68,6 +67,26 @@ describe Bindery::Persistence::ElasticSearch::Pool do
         expect{ elasticsearch.indices.get(index: deleted_index_name).count }.to raise_error(Elasticsearch::Transport::Transport::Errors::NotFound)
       end
     end
+
+    describe 'require_index_to_be_in_pool!' do
+      let(:index_name) { 'MORK_indexName22' }
+      before do
+        allow(adapter).to receive(:index_names).and_return(index_names)
+      end
+      subject { adapter.require_index_to_be_in_pool!(index_name) }
+      context 'when the pool has an index by the given name' do
+        let(:index_names) { [index_name] }
+        it 'does nothing' do
+          expect(subject).to be_nil
+        end
+      end
+      context 'when the pool does not have an index by the given name' do
+        let(:index_names) { [] }
+        it 'raises an ArgumentError' do
+          expect { subject }.to raise_error(ArgumentError, "The pool with id \##{pool.id} does not have an index named #{index_name}")
+        end
+      end
+    end
   end
 
   describe 'destroy' do
@@ -84,6 +103,7 @@ describe Bindery::Persistence::ElasticSearch::Pool do
     expect(subject.__elasticsearch__).to receive(:search).with(query_params)
     subject.search(query_params)
   end
+
   describe "Adapter.search", elasticsearch:true do
     let(:pool) { double("Pool", to_param:"4567") }
     let(:stub_response){ {"hits"=>{"hits"=>[]}} }

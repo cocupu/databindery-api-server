@@ -6,7 +6,6 @@ describe Bindery::Persistence::Dat::Repository do
   let(:pool) { FactoryGirl.build(:dat_backed_pool) }
   let(:repo) { described_class.new(pool: pool, dir: dat_dir) }
   let(:existing_index_name) { '3149_2015-10-21_17:10:43' }
-  let(:index_names) { [existing_index_name, 'another-index-name'] }
 
   describe '#new' do
     subject { described_class.new(pool: pool) }
@@ -35,7 +34,6 @@ describe Bindery::Persistence::Dat::Repository do
 
     before do
       allow(pool).to receive(:__elasticsearch__).and_return(elasticsearch_adapter)
-      allow(elasticsearch_adapter).to receive(:index_names).and_return(index_names)
     end
 
     context 'with no args' do
@@ -65,6 +63,9 @@ describe Bindery::Persistence::Dat::Repository do
       end
       context 'when the index belongs to the pool' do
         let(:index_name) { existing_index_name }
+        before do
+          expect(pool.__elasticsearch__).to receive(:require_index_to_be_in_pool!).and_return(nil)
+        end
         it 'indexes the data into the named index' do
           expect(repo).to receive(:bulk_index).with(dat_diff_data, index_name: existing_index_name)
           subject
@@ -72,8 +73,11 @@ describe Bindery::Persistence::Dat::Repository do
       end
       context 'when the index does not belong to the pool' do
         let(:index_name) { 'taekwondo' }
+        before do
+          expect(pool.__elasticsearch__).to receive(:require_index_to_be_in_pool!).and_raise(ArgumentError, 'the error message')
+        end
         it 'raises an error' do
-          expect { subject }.to raise_error(ArgumentError, "The pool with id \##{pool.id} does not have an index named #{index_name}")
+          expect { subject }.to raise_error(ArgumentError, 'the error message')
         end
       end
     end

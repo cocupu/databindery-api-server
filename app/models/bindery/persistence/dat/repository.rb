@@ -16,7 +16,7 @@ module Bindery
         # @option [String] to commit hash to diff up to
         def index(index_name: nil, from: nil, to: nil)
           if index_name
-            raise ArgumentError, "The pool with id \##{pool.id} does not have an index named #{index_name}" unless pool.__elasticsearch__.index_names.include?(index_name)
+            pool.__elasticsearch__.require_index_to_be_in_pool!(index_name)
           else
             index_name = pool.to_param
           end

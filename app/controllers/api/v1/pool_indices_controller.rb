@@ -11,34 +11,58 @@ class Api::V1::PoolIndicesController < ApplicationController
   end
 
   def create
+    created_index_name = @pool.__elasticsearch__.create_index(index_name: index_name_from_params)
+    if params[:source]
+      @pool.update_index(index_name: created_index_name, source: params[:source])
+    end
+    @pool.models.each {|model| model.__elasticsearch__.save(index_name: created_index_name) } unless params[:write_models] == false
+    if params[:alias]
+      @pool.__elasticsearch__.set_alias(created_index_name)
+    end
     render :json=>{}
   end
 
   def show
-    render :json=>{}
+    index_name = index_name_from_params
+    begin
+      @pool.__elasticsearch__.require_index_to_be_in_pool!(index_name) unless index_name == @pool.to_param
+    rescue ArgumentError => e
+      render json: Api::V1.generate_response_body(:unprocessable_entity, description: e.message), :status => :unprocessable_entity
+      return
+    end
+    json = @pool.__elasticsearch__.get_index(index_name)
+    render :json=>json
   end
 
   def update
-    if params[:source].nil? || params[:source] == 'dat'
-      @pool.dat.index(index_name: index_name)
-      puts "indexed into index named #{index_name}"
-    elsif params[:source].kind_of?(Hash)
-      dat_params = params[:source].fetch(:dat, {to: nil, from: nil})
-      @pool.dat.index(index_name: index_name, from: dat_params[:from], to: dat_params[:to])
+    begin
+      @pool.update_index(index_name: index_name_from_params, source: params[:source])
+    rescue ArgumentError => e
+      render json: Api::V1.generate_response_body(:unprocessable_entity, description: e.message), :status => :unprocessable_entity
+      return
+    end
+
+    if params[:alias]
+      @pool.__elasticsearch__.set_alias(index_name_from_params)
     end
     render json: Api::V1.generate_response_body(:success)
   end
 
   def destroy
-    @pool.__elasticsearch__.delete_index(index_name)
+    @pool.__elasticsearch__.delete_index(index_name_from_params)
     render json: Api::V1.generate_response_body(:deleted)
   end
 
   private
 
-  def index_name
+  def index_name_from_params
     if params[:id] == 'live'
-      @pool.to_param
+      if params[:index_name]
+        params[:alias] ||= 'live'
+        params[:index_name]
+      else
+        @pool.to_param
+      end
     else
       params[:id]
     end
