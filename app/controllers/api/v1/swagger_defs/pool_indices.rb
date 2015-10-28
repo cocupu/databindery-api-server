@@ -4,6 +4,16 @@ module Api::V1::SwaggerDefs::PoolIndices
   included do
     swagger_controller :indices, "Index Management"
 
+    swagger_api :index do
+      summary "Lists indices belonging to the Pool"
+      # notes ""
+      param :path, :pool_id, :string, :required, "ID of the pool to search within"
+      response :unauthorized
+      response :forbidden
+      response :not_acceptable, "The request you made is not acceptable"
+      # response :requested_range_not_satisfiable
+    end
+
     swagger_api :create do
       summary "Creates a new elasticsearch Index for the pool and and (optionally) writes the pool's models into the index as mappings"
       param :path, :pool_id, :string, :required, "ID of the pool the index will belong to"
