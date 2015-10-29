@@ -1,5 +1,5 @@
 class Api::V1::ElasticSearchProxyController < Api::V1::DataController
-  include Api::V1::SwaggerDefs::Data
+  include Api::V1::SwaggerDefs::ElasticsearchProxy
 
   # call load_pool with parama[:id] instead of params[:pool_id]
   prepend_before_action { load_pool(id_param: :id) }
